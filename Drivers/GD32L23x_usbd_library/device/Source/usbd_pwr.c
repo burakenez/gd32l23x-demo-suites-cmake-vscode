@@ -2,11 +2,11 @@
     \file    usbd_pwr.c
     \brief   USB device power management driver
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -45,14 +45,14 @@ void usbd_remote_wakeup_active(usb_dev *udev)
     resume_mcu(udev);
 
 #ifdef LPM_ENABLED
-    if(1U == udev->lpm.L1_remote_wakeup){
+    if(1U == udev->lpm.L1_remote_wakeup) {
         udev->drv_handler->resume(udev);
 
         udev->lpm.L1_resume = 1U;
     }
 #endif /* LPM_ENABLED */
 
-    if(1U == udev->pm.remote_wakeup){
+    if(1U == udev->pm.remote_wakeup) {
         udev->pm.remote_wakeup_on = 1U;
         udev->pm.esof_count = 15U;
         udev->drv_handler->resume(udev);

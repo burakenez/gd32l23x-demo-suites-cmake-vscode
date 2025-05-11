@@ -2,11 +2,11 @@
     \file    usbd_msc_bbb.h
     \brief   the header file of the usbd_msc_bbb.c file
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification, 
 are permitted provided that the following conditions are met:
@@ -32,43 +32,40 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 OF SUCH DAMAGE.
 */
 
-#ifndef __USBD_MSC_BBB_H
-#define __USBD_MSC_BBB_H
+#ifndef USBD_MSC_BBB_H
+#define USBD_MSC_BBB_H
 
 #include "usbd_core.h"
 #include "usbd_msc_mem.h"
 #include "usbd_msc_scsi.h"
 
-#define BBB_CBW_SIGNATURE                 0x43425355U
-#define BBB_CSW_SIGNATURE                 0x53425355U
-#define BBB_CBW_LENGTH                    31U
-#define BBB_CSW_LENGTH                    13U
+#define BBB_CBW_SIGNATURE                 0x43425355U             /*!< MSC BBB CBW signature */
+#define BBB_CSW_SIGNATURE                 0x53425355U             /*!< MSC BBB CSW signature */
+#define BBB_CBW_LENGTH                    31U                     /*!< MSC BBB CBW length */
+#define BBB_CSW_LENGTH                    13U                     /*!< MSC BBB CSW length */
 
-typedef struct
-{
-    uint32_t dCBWSignature;
-    uint32_t dCBWTag;
-    uint32_t dCBWDataTransferLength;
-    uint8_t  bmCBWFlags;
-    uint8_t  bCBWLUN;
-    uint8_t  bCBWCBLength;
-    uint8_t  CBWCB[16];
-}msc_bbb_cbw;
+typedef struct {
+    uint32_t dCBWSignature;                /*!< CBW signature */
+    uint32_t dCBWTag;                      /*!< CBW tag */
+    uint32_t dCBWDataTransferLength;       /*!< CBW signature */
+    uint8_t  bmCBWFlags;                   /*!< CBW flags */
+    uint8_t  bCBWLUN;                      /*!< CBW LUN */
+    uint8_t  bCBWCBLength;                 /*!< CBW length */
+    uint8_t  CBWCB[16];                    /*!< CBW CB */
+} msc_bbb_cbw;
 
-typedef struct
-{
-    uint32_t dCSWSignature;
-    uint32_t dCSWTag;
-    uint32_t dCSWDataResidue;
-    uint8_t  bCSWStatus;
-}msc_bbb_csw;
+typedef struct {
+    uint32_t dCSWSignature;                /*!< CSW signature  */
+    uint32_t dCSWTag;                      /*!< CSW tag */
+    uint32_t dCSWDataResidue;              /*!< CSW data residuer */
+    uint8_t  bCSWStatus;                   /*!< CSW status */
+} msc_bbb_csw;
 
 /* CSW command status */
-enum msc_csw_status
-{
-    CSW_CMD_PASSED = 0,
-    CSW_CMD_FAILED,
-    CSW_PHASE_ERROR
+enum msc_csw_status {
+    CSW_CMD_PASSED = 0U,                  /*!< CSW passed command status */
+    CSW_CMD_FAILED,                       /*!< CSW failed command status */
+    CSW_PHASE_ERROR                       /*!< CSW phase error status */
 };
 
 /* MSC BBB state */
@@ -87,45 +84,45 @@ enum msc_bbb_status {
     BBB_STATUS_ERROR        /*!< error status */
 };
 
-typedef struct
-{
-    __ALIGNED(4) uint8_t bbb_data[MSC_MEDIA_PACKET_SIZE];
+typedef struct {
+    __ALIGNED(2) uint8_t bbb_data[MSC_MEDIA_PACKET_SIZE];                       /*!< MSC BBB data buff */
 
-    uint8_t max_lun;
-    uint8_t bbb_state;
-    uint8_t bbb_status;
+    uint8_t max_lun;                                                            /*!< maximum LUN */
 
-    uint32_t bbb_datalen;
+    uint8_t bbb_state;                                                          /*!< BBB state */
+    uint8_t bbb_status;                                                         /*!< BBB status */
 
-    __ALIGNED(2) msc_bbb_cbw bbb_cbw;
-    __ALIGNED(2) msc_bbb_csw bbb_csw;
+    uint32_t bbb_datalen;                                                       /*!< BBB data length */
 
-    uint8_t scsi_sense_head;
-    uint8_t scsi_sense_tail;
+    __ALIGNED(2) msc_bbb_cbw bbb_cbw;                                           /*!< MSC BBB CBW structural */
+    __ALIGNED(2) msc_bbb_csw bbb_csw;                                           /*!< MSC BBB CSW structural */
 
-    uint32_t scsi_blk_size[MEM_LUN_NUM];
-    uint32_t scsi_blk_nbr[MEM_LUN_NUM];
+    uint8_t scsi_sense_head;                                                    /*!< SCSI sense header */
+    uint8_t scsi_sense_tail;                                                    /*!< SCSI sense tail */
 
-    uint32_t scsi_blk_addr;
-    uint32_t scsi_blk_len;
+    uint32_t scsi_blk_size[MEM_LUN_NUM];                                        /*!< SCSI block size */
+    uint32_t scsi_blk_nbr[MEM_LUN_NUM];                                         /*!< SCSI block number */
 
-    msc_scsi_sense scsi_sense[SENSE_LIST_DEEPTH];
+    uint32_t scsi_blk_addr;                                                     /*!< SCSI block address */
+    uint32_t scsi_blk_len;                                                      /*!< SCSI block length */
+
+    msc_scsi_sense scsi_sense[SENSE_LIST_DEEPTH];                               /*!< MSC SCSI sense buff structure */
 } usbd_msc_handler;
 
 /* function declarations */
-/* initialize the bbb process */
-void msc_bbb_init (usb_dev *udev);
+/* initialize the BBB process */
+void msc_bbb_init(usb_dev *udev);
 /* reset the BBB machine */
-void msc_bbb_reset (usb_dev *udev);
+void msc_bbb_reset(usb_dev *udev);
 /* deinitialize the BBB machine */
-void msc_bbb_deinit (usb_dev *udev);
+void msc_bbb_deinit(usb_dev *udev);
 /* handle BBB data IN stage */
-void msc_bbb_data_in (usb_dev *udev, uint8_t ep_num);
+void msc_bbb_data_in(usb_dev *udev, uint8_t ep_num);
 /* handle BBB data OUT stage */
-void msc_bbb_data_out (usb_dev *udev, uint8_t ep_num);
+void msc_bbb_data_out(usb_dev *udev, uint8_t ep_num);
 /* send the CSW(command status wrapper) */
-void msc_bbb_csw_send (usb_dev *udev, uint8_t csw_status);
+void msc_bbb_csw_send(usb_dev *udev, uint8_t csw_status);
 /* complete the clear feature request */
-void msc_bbb_clrfeature (usb_dev *udev, uint8_t ep_num);
+void msc_bbb_clrfeature(usb_dev *udev, uint8_t ep_num);
 
-#endif /* __USBD_MSC_BBB_H */
+#endif /* USBD_MSC_BBB_H */

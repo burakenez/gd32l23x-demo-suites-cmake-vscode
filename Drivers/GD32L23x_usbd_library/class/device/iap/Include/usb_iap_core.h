@@ -2,11 +2,11 @@
     \file    usb_iap_core.h
     \brief   the header file of IAP driver
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -32,46 +32,54 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 OF SUCH DAMAGE.
 */
 
-#ifndef __USB_IAP_CORE_H
-#define __USB_IAP_CORE_H
+#ifndef USB_IAP_CORE_H
+#define USB_IAP_CORE_H
 
 #include "usbd_enum.h"
 #include "usb_hid.h"
 
-#define USB_DESC_LEN_IAP_REPORT             35U
-#define USB_DESC_LEN_IAP_CONFIG_SET         41U
+#define USB_DESC_LEN_IAP_REPORT             35U                         /*!< report descriptor length */
+#define USB_DESC_LEN_IAP_CONFIG_SET         41U                         /*!< configuration descriptor length */
 
 /* special commands with download request */
-#define IAP_OPTION_BYTE                     0x01U
-#define IAP_ERASE                           0x02U
-#define IAP_DNLOAD                          0x03U
-#define IAP_LEAVE                           0x04U
-#define IAP_GETBIN_ADDRESS                  0x05U
+#define IAP_READ_OPTION_BYTE                0x01U                       /*!< read option byte request */
+#define IAP_ERASE                           0x02U                       /*!< erase request */
+#define IAP_DOWNLOAD                        0x03U                       /*!< download request */
+#define IAP_LEAVE                           0x04U                       /*!< leave request */
+#define IAP_GETBIN_ADDRESS                  0x05U                       /*!< get bin address request */
+#define IAP_WRITE_OPTION_BYTE               0x06U                       /*!< write option byte request */
+#define IAP_UPLOAD                          0x07U                       /*!< upload request */
+#define IAP_CHECK_RDP                       0x08U                       /*!< check rdp state request */
 
-typedef void (*app_func)(void);
+#define OPERATION_SUCCESS                   0x02U                       /*!< operation success status */
+#define OPERATION_FAIL                      0x5FU                       /*!< operation fail status */
+#define LEAVE_FINISH                        0x04U                       /*!< leave finish status */
+#define OB_WRITE_SUCCESS                    0x03U                       /*!< OB write success status */
+#define IS_RDP_MODE                         0xBBU                       /*!< MCU RDP status */
+#define IS_NORMAL_MODE                      0xA5U                       /*!< MCU normal status */
 
-typedef struct
-{
-    __ALIGNED(2) uint8_t report_buf[IAP_OUT_PACKET + 1U];
-    __ALIGNED(2) uint8_t option_byte[IAP_IN_PACKET];
+#define IAP_HOST_ID                         0x01U                       /*!< IAP host ID */
+#define IAP_DEVICE_ID                       0x02U                       /*!< IAP device ID */
+
+typedef struct {
+    __ALIGNED(2) uint8_t flag;                                          /*!< flag */
+    __ALIGNED(2) uint8_t report_buf[IAP_OUT_PACKET];                    /*!< report buff */
+    __ALIGNED(2) uint8_t option_byte[IAP_IN_PACKET];                    /*!< option byte buff */
 
     /* state machine variables */
-    __ALIGNED(2) uint8_t dev_status[IAP_IN_PACKET];
-    __ALIGNED(2) uint8_t bin_addr[IAP_IN_PACKET];
+    __ALIGNED(2) uint8_t dev_status[IAP_IN_PACKET];                     /*!< device status */
+    __ALIGNED(2) uint8_t bin_addr[IAP_IN_PACKET];                       /*!< load bin address */
+    __ALIGNED(2) uint8_t reportID;                                      /*!< report id */
 
-    __ALIGNED(2) uint8_t reportID;
-    __ALIGNED(2) uint8_t flag;
-
-    __ALIGNED(2) uint32_t protocol;
-    __ALIGNED(2) uint32_t idlestate;
-
-    uint16_t transfer_times;
-    uint16_t page_count;
-    uint16_t lps;           /* last packet size */
-    uint32_t file_length;
-    uint32_t base_address;
+    uint32_t protocol;                                                  /*!< control request protocol */
+    uint32_t idlestate;                                                 /*!< control request idle state */
+    uint16_t transfer_times;                                            /*!< data transfer times */
+    uint16_t page_count;                                                /*!< memory page count */
+    uint32_t file_length;                                               /*!< file length*/
+    uint32_t base_address;                                              /*!< loaded base address */
 } usbd_iap_handler;
 
+typedef void(*app_func)(void);
 extern usb_desc iap_desc;
 extern usb_class iap_class;
 
@@ -79,4 +87,4 @@ extern usb_class iap_class;
 /* send IAP report */
 uint8_t iap_report_send(usb_dev *udev, uint8_t *report, uint16_t len);
 
-#endif /* __USB_IAP_CORE_H */
+#endif /* USB_IAP_CORE_H */

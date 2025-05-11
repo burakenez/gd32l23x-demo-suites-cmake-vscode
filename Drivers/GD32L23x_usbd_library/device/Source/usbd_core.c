@@ -2,11 +2,11 @@
     \file    usbd_core.c
     \brief   USB device driver
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -37,6 +37,8 @@ OF SUCH DAMAGE.
 #include "usbd_transc.h"
 #include "usbd_lld_core.h"
 
+#include <stdio.h>
+
 usbd_int_cb_struct *usbd_int_fops = NULL;
 
 /*!
@@ -61,6 +63,7 @@ void usbd_init(usb_dev *udev, usb_desc *desc, usb_class *usbc)
     udev->drv_handler = &usbd_drv_handler;
 
     udev->control.ctl_state = USBD_CTL_IDLE;
+
     udev->ep_transc[0][TRANSC_SETUP] = _usb_setup_transc;
     udev->ep_transc[0][TRANSC_OUT] = _usb_out0_transc;
     udev->ep_transc[0][TRANSC_IN] = _usb_in0_transc;

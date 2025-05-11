@@ -2,11 +2,11 @@
     \file    dfu_mem.h
     \brief   USB DFU device media access layer header file
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification, 
 are permitted provided that the following conditions are met:
@@ -32,39 +32,40 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 OF SUCH DAMAGE.
 */
 
-#ifndef __DFU_MEM_H
-#define __DFU_MEM_H
+#ifndef DFU_MEM_H
+#define DFU_MEM_H
 
 #include "usbd_conf.h"
 
-typedef struct _dfu_mem_prop
-{
-    const uint8_t* pstr_desc;
+typedef struct _dfu_mem_prop {
+    const uint8_t* pstr_desc;                                            /*!< string descriptor pointer */
 
-    uint8_t  (*mem_init)      (void);
-    uint8_t  (*mem_deinit)    (void);
-    uint8_t  (*mem_erase)     (uint32_t addr);
-    uint8_t  (*mem_write)     (uint8_t *buf, uint32_t addr, uint32_t len);
-    uint8_t* (*mem_read)      (uint8_t *buf, uint32_t addr, uint32_t len);
-    uint8_t  (*mem_checkaddr) (uint32_t addr);
+    uint8_t  (*mem_init)(void);
+    uint8_t  (*mem_deinit)(void);
+    uint8_t  (*mem_erase)(uint32_t addr);
+    uint8_t  (*mem_write)(uint8_t *buf, uint32_t addr, uint32_t len);
+    uint8_t *(*mem_read)(uint8_t *buf, uint32_t addr, uint32_t len);
+    uint8_t  (*mem_checkaddr)(uint32_t addr);
 
-    const uint32_t erase_timeout;
-    const uint32_t write_timeout;
+    const uint32_t erase_timeout;                                        /*!< memory erase timeout */
+    const uint32_t write_timeout;                                        /*!< memory write timeout */
 } dfu_mem_prop;
 
-typedef enum
-{
-    MEM_OK = 0,
+typedef enum {
+    MEM_OK = 0U,
     MEM_FAIL
 } mem_status;
 
-#define _1ST_BYTE(x)              (uint8_t)((x) & 0xFF)               /*!< addressing cycle 1st byte */
-#define _2ND_BYTE(x)              (uint8_t)(((x) & 0xFF00) >> 8)      /*!< addressing cycle 2nd byte */
-#define _3RD_BYTE(x)              (uint8_t)(((x) & 0xFF0000) >> 16)   /*!< addressing cycle 3rd byte */
+#define _1ST_BYTE(x)              (uint8_t)((x) & 0xFFU)                /*!< addressing cycle 1st byte */
+#define _2ND_BYTE(x)              (uint8_t)(((x) & 0xFF00U) >> 8)       /*!< addressing cycle 2nd byte */
+#define _3RD_BYTE(x)              (uint8_t)(((x) & 0xFF0000U) >> 16)    /*!< addressing cycle 3rd byte */
 
 #define POLLING_TIMEOUT_SET(x)    buffer[0] = _1ST_BYTE(x);\
                                   buffer[1] = _2ND_BYTE(x);\
                                   buffer[2] = _3RD_BYTE(x);
+
+extern dfu_mem_prop dfu_inter_flash_cb;
+extern dfu_mem_prop dfu_nor_flash_cb;
 
 /* function declarations */
 /* initialize the memory media */
@@ -80,4 +81,4 @@ uint8_t* dfu_mem_read(uint8_t *buf, uint32_t addr, uint32_t len);
 /* get the status of a given memory and store in buffer */
 uint8_t dfu_mem_getstatus(uint32_t addr, uint8_t cmd, uint8_t *buffer);
 
-#endif /* __DFU_MEM_H */
+#endif /* DFU_MEM_H */

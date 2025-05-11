@@ -6,7 +6,7 @@
 
 /*
  * Copyright (c) 2009-2018 Arm Limited. All rights reserved.
- * Copyright (c) 2024, GigaDevice Semiconductor Inc.
+ * Copyright (c) 2025, GigaDevice Semiconductor Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -47,6 +47,33 @@
                                    }                              \
                                 }
 
+/* The following is to prevent Vcore fluctuations caused by frequency switching. 
+   It is strongly recommended to include it to avoid issues caused by self-removal. */
+#define RCU_MODIFY_DE_2(__delay)  do{                                     \
+                                      volatile uint32_t i,reg;            \
+                                      if(0 != __delay){                   \
+                                          /* Insert a software delay */   \
+                                          for(i=0; i<__delay; i++){       \
+                                          }                               \
+                                          reg = RCU_CFG0;                 \
+                                          reg &= ~(RCU_CFG0_AHBPSC);     \
+                                          reg |= RCU_AHB_CKSYS_DIV2;     \
+                                          /* AHB = SYSCLK/2 */           \
+                                          RCU_CFG0 = reg;                \
+                                          /* Insert a software delay */  \
+                                          for(i=0; i<__delay; i++){      \
+                                          }                              \
+                                          reg = RCU_CFG0;                \
+                                          reg &= ~(RCU_CFG0_AHBPSC);     \
+                                          reg |= RCU_AHB_CKSYS_DIV4;     \
+                                          /* AHB = SYSCLK/4 */           \
+                                          RCU_CFG0 = reg;                \
+                                          /* Insert a software delay */  \
+                                          for(i=0; i<__delay; i++){      \
+                                          }                              \
+                                      }                                  \
+                                  }while(0)
+
 #define SEL_IRC16M      0x00
 #define SEL_HXTAL       0x01
 #define SEL_PLL         0x02
@@ -72,6 +99,14 @@ static void system_clock_16m_irc16m(void);
 
 /* configure the system clock */
 static void system_clock_config(void);
+/* software delay to prevent the impact of Vcore fluctuations.
+   It is strongly recommended to include it to avoid issues caused by self-removal. */
+static void _soft_delay_(uint32_t time)
+{
+    __IO uint32_t i;
+    for(i=0; i<time*10; i++){
+    }
+}
 
 /*!
     \brief      setup the microcontroller system, initialize the system
@@ -85,7 +120,11 @@ void SystemInit(void)
     RCU_CTL |= RCU_CTL_IRC16MEN;
     while(0U == (RCU_CTL & RCU_CTL_IRC16MSTB)) {
     }
+    if(((RCU_CFG0 & RCU_CFG0_SCSS) == RCU_SCSS_PLL)){
+        RCU_MODIFY_DE_2(0x50);
+    }
     RCU_CFG0 &= ~RCU_CFG0_SCS;
+    _soft_delay_(10);
 #ifdef  GD32L235
     RCU_CFG1 &= ~RCU_CFG1_SCS_2;
 #endif
@@ -142,6 +181,7 @@ static void system_clock_8m_hxtal(void)
 {
     uint32_t timeout = 0U;
     uint32_t stab_flag = 0U;
+    __IO uint32_t reg_temp;
 
     /* enable HXTAL */
     RCU_CTL |= RCU_CTL_HXTALEN;
@@ -165,9 +205,11 @@ static void system_clock_8m_hxtal(void)
     /* APB1 = AHB */
     RCU_CFG0 |= RCU_APB1_CKAHB_DIV1;
 
+    reg_temp = RCU_CFG0;
     /* select HXTAL as system clock */
-    RCU_CFG0 &= ~RCU_CFG0_SCS;
-    RCU_CFG0 |= RCU_CKSYSSRC_HXTAL;
+    reg_temp &= ~RCU_CFG0_SCS;
+    reg_temp |= RCU_CKSYSSRC_HXTAL;
+    RCU_CFG0 = reg_temp;
 
     /* wait until HXTAL is selected as system clock */
     while((RCU_CFG0 & RCU_CFG0_SCSS) != RCU_SCSS_HXTAL) {
@@ -185,6 +227,7 @@ static void system_clock_64m_hxtal(void)
 {
     uint32_t timeout = 0U;
     uint32_t stab_flag = 0U;
+    __IO uint32_t reg_temp;
 
     /* enable HXTAL */
     RCU_CTL |= RCU_CTL_HXTALEN;
@@ -206,7 +249,7 @@ static void system_clock_64m_hxtal(void)
 #else
     /* set the wait state counter value */
     FMC_WS = (FMC_WS & (~FMC_WS_WSCNT)) | FMC_WAIT_STATE_1;
-# endif
+#endif
 
 
     /* HXTAL is stable */
@@ -229,9 +272,11 @@ static void system_clock_64m_hxtal(void)
     while(0U == (RCU_CTL & RCU_CTL_PLLSTB)) {
     }
 
+    reg_temp = RCU_CFG0;
     /* select PLL as system clock */
-    RCU_CFG0 &= ~RCU_CFG0_SCS;
-    RCU_CFG0 |= RCU_CKSYSSRC_PLL;
+    reg_temp &= ~RCU_CFG0_SCS;
+    reg_temp |= RCU_CKSYSSRC_PLL;
+    RCU_CFG0 = reg_temp;
 
     /* wait until PLL is selected as system clock */
     while((RCU_CFG0 & RCU_CFG0_SCSS) != RCU_SCSS_PLL) {
@@ -249,6 +294,7 @@ static void system_clock_64m_irc16m(void)
 {
     uint32_t timeout = 0U;
     uint32_t stab_flag = 0U;
+    __IO uint32_t reg_temp;
 
     /* enable IRC16M */
     RCU_CTL |= RCU_CTL_IRC16MEN;
@@ -265,15 +311,13 @@ static void system_clock_64m_irc16m(void)
         }
     }
 
-
 #ifdef  GD32L235
     /* set the wait state counter value */
     FMC_WS = (FMC_WS & (~FMC_WS_WSCNT)) | FMC_WAIT_STATE_2;
 #else
     /* set the wait state counter value */
     FMC_WS = (FMC_WS & (~FMC_WS_WSCNT)) | FMC_WAIT_STATE_1;
-# endif
-
+#endif
 
     /* AHB = SYSCLK */
     RCU_CFG0 |= RCU_AHB_CKSYS_DIV1;
@@ -294,9 +338,11 @@ static void system_clock_64m_irc16m(void)
     while(0U == (RCU_CTL & RCU_CTL_PLLSTB)) {
     }
 
+    reg_temp = RCU_CFG0;
     /* select PLL as system clock */
-    RCU_CFG0 &= ~RCU_CFG0_SCS;
-    RCU_CFG0 |= RCU_CKSYSSRC_PLL;
+    reg_temp &= ~RCU_CFG0_SCS;
+    reg_temp |= RCU_CKSYSSRC_PLL;
+    RCU_CFG0 = reg_temp;
 
     /* wait until PLL is selected as system clock */
     while((RCU_CFG0 & RCU_CFG0_SCSS) != RCU_SCSS_PLL) {
@@ -312,6 +358,7 @@ static void system_clock_64m_irc16m(void)
 */
 static void system_clock_16m_irc16m(void)
 {
+    __IO uint32_t reg_temp;
     /* AHB = SYSCLK */
     RCU_CFG0 |= RCU_AHB_CKSYS_DIV1;
     /* APB2 = AHB */
@@ -319,9 +366,11 @@ static void system_clock_16m_irc16m(void)
     /* APB1 = AHB */
     RCU_CFG0 |= RCU_APB1_CKAHB_DIV1;
 
+    reg_temp = RCU_CFG0;
     /* select IRC16M as system clock */
-    RCU_CFG0 &= ~RCU_CFG0_SCS;
-    RCU_CFG0 |= RCU_CKSYSSRC_IRC16M;
+    reg_temp &= ~RCU_CFG0_SCS;
+    reg_temp |= RCU_CKSYSSRC_IRC16M;
+    RCU_CFG0 = reg_temp;
 
     /* wait until IRC16M is selected as system clock */
     while((RCU_CFG0 & RCU_CFG0_SCSS) != RCU_SCSS_IRC16M) {
@@ -396,3 +445,16 @@ void SystemCoreClockUpdate(void)
     clk_exp = ahb_exp[idx];
     SystemCoreClock >>= clk_exp;
 }
+
+#ifdef __FIRMWARE_VERSION_DEFINE
+/*!
+    \brief      get firmware version
+    \param[in]  none
+    \param[out] none
+    \retval     firmware version
+*/
+uint32_t gd32l23x_firmware_version_get(void)
+{
+    return __GD32L23X_STDPERIPH_VERSION;
+}
+#endif /* __FIRMWARE_VERSION_DEFINE */

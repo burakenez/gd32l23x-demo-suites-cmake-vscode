@@ -2,11 +2,11 @@
     \file  gd25qxx.c
     \brief SPI flash gd25qxx driver
 
-    \version 2024-03-25, V2.2.0, demo for GD32L23x
+    \version 2025-02-18, V2.4.0, demo for GD32L23x
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     All rights reserved.
 
@@ -235,7 +235,9 @@ void spi_flash_buffer_write(uint8_t *pbuffer, uint32_t write_addr, uint16_t num_
                 write_addr += SPI_FLASH_PAGE_SIZE;
                 pbuffer += SPI_FLASH_PAGE_SIZE;
             }
-            spi_flash_page_write(pbuffer, write_addr, num_of_single);
+            if(0 != num_of_single) {
+                spi_flash_page_write(pbuffer, write_addr, num_of_single);
+            }
         }
     } else {
         /* write_addr is not SPI_FLASH_PAGE_SIZE aligned */

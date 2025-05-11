@@ -2,11 +2,11 @@
     \file    gd32l23x_it.c
     \brief   interrupt service routines
 
-    \version 2024-03-25, V2.2.0, demo for GD32L23x
+    \version 2025-02-18, V2.4.0, demo for GD32L23x
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -35,6 +35,8 @@ OF SUCH DAMAGE.
 #include "gd32l23x_it.h"
 #include "i2s_codec.h"
 
+#define SRAM_ECC_ERROR_HANDLE(s)    do{}while(1)
+
 /*!
     \brief      this function handles NMI exception
     \param[in]  none
@@ -43,8 +45,13 @@ OF SUCH DAMAGE.
 */
 void NMI_Handler(void)
 {
-    /* if NMI exception occurs, go to infinite loop */
-    while(1) {
+    if(SET == syscfg_flag_get(SYSCFG_FLAG_SRAM_PCEF)) {
+        SRAM_ECC_ERROR_HANDLE("SRAM parity check error\r\n");
+    }else{
+        /* if NMI exception occurs, go to infinite loop */
+        /* HXTAL clock monitor NMI error or NMI pin error */
+        while(1) {
+        }
     }
 }
 

@@ -2,11 +2,11 @@
     \file    usbd_lld_regs.h
     \brief   USB device low level registers
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -32,8 +32,8 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 OF SUCH DAMAGE.
 */
 
-#ifndef __USBD_LLD_REGS_H
-#define __USBD_LLD_REGS_H
+#ifndef USBD_LLD_REGS_H
+#define USBD_LLD_REGS_H
 
 #include "usbd_conf.h"
 
@@ -170,64 +170,80 @@ OF SUCH DAMAGE.
 #define CLR(x)                         (USBD_INTF = ~INTF_##x)
 
 /* endpoint receive/transmission counter register bit offset */
-#define BLKSIZE_OFFSET                 0x01U
-#define BLKNUM_OFFSET                  0x05U
-#define RXCNT_OFFSET                   0x0AU
+#define BLKSIZE_OFFSET                 (0x01U)          /*!< block size offset */
+#define BLKNUM_OFFSET                  (0x05U)          /*!< block number offset */
+#define RXCNT_OFFSET                   (0x0AU)          /*!< receive count offset */
 
-#define TXCNT_OFFSET                   0x0AU
+#define TXCNT_OFFSET                   (0x0AU)          /*!< transmit count offset */
 
-#define BLKSIZE32_MASK                 0x1FU
-#define BLKSIZE2_MASK                  0x01U
+#define BLKSIZE32_MASK                 (0x1FU)          /*!< block size32 mask */
+#define BLKSIZE2_MASK                  (0x01U)          /*!< block size2 mask */
 
-#define BLKSIZE32_OFFSETMASK           0x05U
-#define BLKSIZE2_OFFSETMASK            0x01U
+#define BLKSIZE32_OFFSETMASK           (0x05U)          /*!< block size32 offset mask */
+#define BLKSIZE2_OFFSETMASK            (0x01U)          /*!< block size2 offset mask */
 
 /* USBD operation macros */
 
 /* TX or RX transfer status setting (bits EPTX_STA[1:0]) */
 
-#define USBD_EP_TX_STAT_SET(ep, stat) do {\
-    USBD_EPxCS(ep) = (USBD_EPxCS(ep) & (uint16_t)EPTX_DTGMASK) ^ (stat); \
+#define USBD_EP_TX_STAT_SET(ep, stat) do { \
+    uint16_t regval; \
+    regval = (USBD_EPxCS(ep) & (uint16_t)EPTX_DTGMASK) ^ (stat); \
+    USBD_EPxCS(ep) = regval | EPxCS_RX_ST | EPxCS_TX_ST; \
 } while(0)
 
-#define USBD_EP_RX_STAT_SET(ep, stat) do {\
-    USBD_EPxCS(ep) = (USBD_EPxCS(ep) & (uint16_t)EPRX_DTGMASK) ^ (stat); \
+#define USBD_EP_RX_STAT_SET(ep, stat) do { \
+    uint16_t regval; \
+    regval = (USBD_EPxCS(ep) & (uint16_t)EPRX_DTGMASK) ^ (stat); \
+    USBD_EPxCS(ep) = regval | EPxCS_RX_ST | EPxCS_TX_ST; \
 } while(0)
 
 /* clear bit EPxCS_RX_ST/EPxCS_TX_ST in the endpoint control and status register */
 
-#define USBD_EP_TX_ST_CLEAR(ep) do {\
-    USBD_EPxCS(ep) &= ~EPxCS_TX_ST & (uint16_t)EPCS_MASK; \
+#define USBD_EP_TX_ST_CLEAR(ep) do { \
+    uint16_t regval; \
+    regval = USBD_EPxCS(ep) & (~EPxCS_TX_ST & (uint16_t)EPCS_MASK); \
+    USBD_EPxCS(ep) = regval | EPxCS_RX_ST; \
 } while(0)
 
-#define USBD_EP_RX_ST_CLEAR(ep) do {\
-    USBD_EPxCS(ep) &= ~EPxCS_RX_ST & (uint16_t)EPCS_MASK; \
+#define USBD_EP_RX_ST_CLEAR(ep) do { \
+    uint16_t regval; \
+    regval = USBD_EPxCS(ep) & (~EPxCS_RX_ST & (uint16_t)EPCS_MASK); \
+    USBD_EPxCS(ep) = regval | EPxCS_TX_ST; \
 } while(0)
 
 /* toggle EPxCS_RX_DTG or EPxCS_TX_DTG bit in the endpoint control and status register */
 
-#define USBD_TX_DTG_TOGGLE(ep) do {\
-    USBD_EPxCS(ep) = EPxCS_TX_DTG | (USBD_EPxCS(ep) & EPCS_MASK); \
+#define USBD_TX_DTG_TOGGLE(ep) do { \
+    uint16_t regval; \
+    regval = EPxCS_TX_DTG | (USBD_EPxCS(ep) & EPCS_MASK); \
+    USBD_EPxCS(ep) = regval | EPxCS_RX_ST | EPxCS_TX_ST; \
 } while(0)
 
-#define USBD_RX_DTG_TOGGLE(ep) do {\
-    USBD_EPxCS(ep) = EPxCS_RX_DTG | (USBD_EPxCS(ep) & EPCS_MASK); \
+#define USBD_RX_DTG_TOGGLE(ep) do { \
+    uint16_t regval; \
+    regval = EPxCS_RX_DTG | (USBD_EPxCS(ep) & EPCS_MASK); \
+    USBD_EPxCS(ep) = regval | EPxCS_RX_ST | EPxCS_TX_ST; \
 } while(0)
 
 /* clear EPxCS_RX_DTG or EPxCS_TX_DTG bit in the endpoint control and status register */
 
-#define USBD_TX_DTG_CLEAR(ep) do {\
-    if ((USBD_EPxCS(ep_num) & EPxCS_TX_DTG) != 0U) {\
-        USBD_TX_DTG_TOGGLE(ep);\
+#define USBD_TX_DTG_CLEAR(ep) do { \
+    if(0U != (USBD_EPxCS(ep) & EPxCS_TX_DTG)) { \
+        USBD_TX_DTG_TOGGLE(ep); \
     } \
 } while(0)
 
-#define USBD_RX_DTG_CLEAR(ep) do {\
-    if ((USBD_EPxCS(ep_num) & EPxCS_RX_DTG) != 0U) {\
-        USBD_RX_DTG_TOGGLE(ep);\
+#define USBD_RX_DTG_CLEAR(ep) do { \
+    if(0U != (USBD_EPxCS(ep) & EPxCS_RX_DTG)) { \
+        USBD_RX_DTG_TOGGLE(ep); \
     } \
 } while(0)
 
-#define USBD_EP_DBL_BUF_SET(ep) (USBD_EPxCS(ep) = (USBD_EPxCS(ep) | EPxCS_KCTL) & EPCS_MASK)
+#define USBD_EP_DBL_BUF_SET(ep) do { \
+    uint16_t regval; \
+    regval = (USBD_EPxCS(ep) | EPxCS_KCTL) & EPCS_MASK; \
+    USBD_EPxCS(ep) = regval | EPxCS_RX_ST | EPxCS_TX_ST; \
+} while(0)
 
-#endif /* __USBD_LLD_REGS_H */
+#endif /* USBD_LLD_REGS_H */

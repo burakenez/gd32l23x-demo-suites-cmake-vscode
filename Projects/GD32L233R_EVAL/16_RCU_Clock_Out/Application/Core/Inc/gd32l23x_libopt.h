@@ -2,11 +2,11 @@
     \file    gd32l23x_libopt.h
     \brief   library optional for GD32L23x
 
-    \version 2024-03-25, V2.2.0, demo for GD32L23x
+    \version 2025-02-18, V2.4.0, demo for GD32L23x
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -32,8 +32,8 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 OF SUCH DAMAGE.
 */
 
-#ifndef GD32L23x_LIBOPT_H
-#define GD32L23x_LIBOPT_H
+#ifndef GD32L23X_LIBOPT_H
+#define GD32L23X_LIBOPT_H
 
 #include "gd32l23x_adc.h"
 #include "gd32l23x_crc.h"
@@ -62,5 +62,9 @@ OF SUCH DAMAGE.
 #include "gd32l23x_slcd.h"
 #include "gd32l23x_lptimer.h"
 #include "gd32l23x_vref.h"
+#ifdef GD32L235
+#include "gd32l23x_can.h"
+#endif /* GD32L235 */
 
-#endif /* GD32L23x_LIBOPT_H */
+#endif /* GD32L23X_LIBOPT_H */
+

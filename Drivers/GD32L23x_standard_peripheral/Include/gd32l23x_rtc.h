@@ -2,11 +2,11 @@
     \file    gd32l23x_rtc.h
     \brief   definitions for the RTC
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -106,6 +106,7 @@ OF SUCH DAMAGE.
 #define RTC_CTL_OS                         BITS(21,22)                                 /*!< output selection */
 #define RTC_CTL_COEN                       BIT(23)                                     /*!< calibration output enable */
 #define RTC_CTL_ITSEN                      BIT(24)                                     /*!< internal timestamp event enable */
+#define RTC_CTL_LXTALSTBRST                BIT(30)                                     /*!< external low-speed oscillator stabilization reset*/
 #define RTC_CTL_OUT2EN                     BIT(31)                                     /*!< RTC_OUT pin select */
 
 /* RTC_STAT */
@@ -654,5 +655,9 @@ FlagStatus rtc_flag_get(uint32_t flag);
 /* clear specified flag */
 void rtc_flag_clear(uint32_t flag);
 
+/* LXTAL stabilization reset,this workaround is only for Rev.Code E*/
+void rtc_lxtal_stab_reset_enable(void); 
+/* disable LXTAL stabilization reset */
+void rtc_lxtal_stab_reset_disable(void);
 
 #endif /* GD32L23X_RTC_H */

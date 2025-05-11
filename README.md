@@ -1,137 +1,196 @@
-# GD32L23x Demo Suites cmake
+[![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/burakenez/gd32l23x-demo-suites-cmake-vscode)](https://github.com/burakenez/gd32l23x-demo-suites-cmake-vscode/tags/)
 
-This Repository is created for cmake build system VS Code integration of **GD32L23x Demo Suites** **_2024-03-25, V2.2.0_**.
+# GD32L23x Demo Suites CMake Visual Studio Code Integration
+
+🚀 Welcome to the **GD32L23x Demo Suites CMake Visual Studio Code** repository! This project is designed to integrate the CMake build system with Visual Studio Code, providing a streamlined development environment for **_GD32L23x Demo Suites V2.4.0_**.
+
+## ✨ Features
+- **📦 Comprehensive Integration:** Pre-configured CMake and VS Code settings for seamless builds and debugging.
+- **🔧 Toolchain Support:** Default configuration for **xPack GNU Arm Embedded GCC Toolchain** and **OpenOCD**.
+- **⚙️ Customizability:** Easily adapt paths and configurations for your preferred toolchain or target MCU.
+- **🧩 Lightweight Templates:** A structured and organized template for GD32L23x microcontroller projects.
+- **🔍 Rich Extension Support:**
+  - 🐞 Recommended extensions like `ms-vscode.cmake-tools`, `marus25.cortex-debug`, and `xaver.clang-format` ensure enhanced functionality for CMake, debugging, and code formatting.
+  - 🖼️ Peripheral viewers, RTOS views, and other utilities provide an extensive debugging experience.
+  - 🎨 The `vscode-icons-team.vscode-icons` extension offers visually improved folder and file navigation.
+- **🛠️ Robust Debug Configuration:**
+  - Pre-configured `launch.json` supports debugging with OpenOCD.
+  - Features such as live watch, entry-point settings, and automated pre-launch build tasks streamline the debugging process.
+  - Fully compatible with SVD files for enhanced peripheral visualization and live memory updates.
+
+---
 
 ## Versions of Sub-Modules
-1. **xPack GNU Arm Embedded GCC Toolchain** version is **_xpack-arm-none-eabi-gcc-11.3.1-1.1_**.
-	- **Path:** _Tools/xpack-arm-none-eabi-gcc-11.3.1-1.1_
-	- You can use any toolchain you want. You need to correct paths in following files:
-		- _Projects/Template/cmake/arm-none-eabi-gcc.cmake:2:_
-			`set(TOOLCHAIN_DIRECTORY "${CMAKE_SOURCE_DIR}/../../Tools/xpack-arm-none-eabi-gcc-11.3.1-1.1/bin")`
-		- _Projects/Template/.vscode/launch.json:12:_
-			`"gdbPath": "${workspaceFolder}/../../Tools/xpack-arm-none-eabi-gcc-11.3.1-1.1/bin/arm-none-eabi-gdb.exe"`
-   - You can use following link to download other versions:
-   		- https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases
 
-2. **OpenOCD** version is **_xpack-openocd-0.11.0-3_**.
-	- **Path:** _Tools/xpack-openocd-0.11.0-3_
-	- Extracted from **Embedded Builder** **_V1.4.1.23782_**.
-	- I highly suggest <ins>not to use</ins> another version of OpenOCD because of lack of GD32 MCU implementation.
-	- If you want to change it, you need to correct paths in following files:
-		- _Projects/Template/.vscode/launch.json:14:_
-			`"serverpath": "${workspaceFolder}/../../Tools/xpack-openocd-0.11.0-3/bin/openocd.exe"`
-		- _Projects/Template/.vscode/launch.json:17:_
-			`"${workspaceFolder}/../../Tools/xpack-openocd-0.11.0-3/scripts/target/openocd_gdlink_gd32l23x.cfg"`
-			- If you want to debug another MCU, then you can use another **[.cfg]** file of OpenOCD.
-		- _Projects/Template/.vscode/task.json:_
-			- Find and change all following in paths:
-     			`${workspaceFolder}/../../../Tools/xpack-openocd-0.11.0-3`
+### 1. **xPack GNU Arm Embedded GCC Toolchain**
+- **Version:** _xpack-arm-none-eabi-gcc-11.3.1-1.1_
+- **Path:** `Tools/xpack-arm-none-eabi-gcc-11.3.1-1.1`
+- **Customization:**
+  - Update the paths in these files:
+    - `Projects/<BoardName>/<ProjectName>/cmake/arm-none-eabi-gcc.cmake` (line 2):
+      ```cmake
+      set(TOOLCHAIN_DIRECTORY "${CMAKE_SOURCE_DIR}/../../../Tools/xpack-arm-none-eabi-gcc-11.3.1-1.1/bin")
+      ```
+    - `Projects/<BoardName>/<ProjectName>/.vscode/launch.json` (line 12):
+      ```json
+      "gdbPath": "${workspaceFolder}/../../../Tools/xpack-arm-none-eabi-gcc-11.3.1-1.1/bin/arm-none-eabi-gdb.exe"
+      ```
+- [Download alternative versions here](https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases).
 
-3. **GD32L23x_standard_peripheral** version is **_2024-03-25, V2.0.2_**.
-	- **Path:** _Drivers/GD32L23x_standard_peripheral_
-	
-3. **GD32L23x_usbd_library** version is **_2024-03-25, V2.0.2_**.
-	- **Path:** _Drivers/GD32L23x_usbd_library_
+### 2. **OpenOCD**
+- **Version:** _xpack-openocd-0.11.0-3_
+- **Path:** `Tools/xpack-openocd-0.11.0-3`
+- **Notes:**
+  - Extracted from **Embedded Builder V1.4.1.23782**.
+  - ⚠️ Avoid using other versions due to limited support for GD32 MCUs.
+  - Update paths in these files if necessary:
+    - `Projects/<BoardName>/<ProjectName>/.vscode/launch.json` (lines 14, 17):
+      ```json
+      "serverpath": "${workspaceFolder}/../../../Tools/xpack-openocd-0.11.0-3/bin/openocd.exe"
+      ```
+      ```json
+      "${workspaceFolder}/../../../Tools/xpack-openocd-0.11.0-3/scripts/target/openocd_gdlink_gd32l23x.cfg"
+      ```
+    - `Projects/<BoardName>/<ProjectName>/.vscode/task.json`: Update all occurrences of:
+      ```
+      ${workspaceFolder}/../../../Tools/xpack-openocd-0.11.0-3
+      ```
 
-4. **CMSIS** version is **_V6.1_**
-	- **Path:** _Drivers/CMSIS_
-	- Original latest GD CMSIS version was **_V5.1_** in **GD32L23x Demo Suites** **_2024-03-25, V2.2.0_**.
-	- It is updated to **_V6.1_**.
+---
 
-5. **CMSIS/GD/GD32L23x** version is **_2024-03-25, V2.0.2_**
-	- **Path:** _Drivers/CMSIS/GD/GD32L23x_
-	- This is extracted from **GD32L23x Demo Suites** **_2024-03-25, V2.2.0_**.
-	
-## Tutorial
+## Versions of Drivers and Middlewares
 
-### 1. Download and Install **VS Code** from following link:
-- https://code.visualstudio.com/
+### 1. **CMSIS**
+- **Version:** `V6.1`
+- **Path:** `Drivers/CMSIS`
 
-### 2. Download and Install **git** from following link:
-- https://git-scm.com/downloads
-- If install directory is different, then correct following path:
-	- _Projects/Template/.vscode/settings.json:5:_
-		`"path": "C:\\Program Files\\Git\\bin\\bash.exe"`
+### 2. **CMSIS/GD/GD32L23x**
+- **Version:** `V2.2.0 (2025-02-10)`
+- **Path:** `Drivers/CMSIS/GD/GD32L23x`
+- Extracted from `GD32L23x Demo Suites V2.4.0`
 
-### 3. Download or Clone **the Repository** into your hard drive.
-- https://github.com/burakenez/gd32l23x-demo-suites-cmake.git
-- Avoid longh directory paths. It can cause some building problems.
+### 3. **GD32L23x_standard_peripheral**
+- **Version:** `V2.2.0 (2025-02-10)`
+- **Path:** `Drivers/GD32L23x_standard_peripheral`
 
-### 4. Open Project folder in VS Code, not the top level folder directory.
-- For example, _Projects/Template_
+### 4. **GD32L23x_usbd_library**
+- **Version:** `V2.2.0 (2025-02-10)`
+- **Path:** `Drivers/GD32L23x_usbd_library`
 
-### 5. Download **VS Code Extentions** mentioned in _Projects/Template/.vscode/extensions.json_.
+---
 
-### 6. **cmake** and **ninja** will be downloaded automatically, thanks to _Projects/Template/vcpkg-configuration.json_ file.
-- If you want to change vcpkg storage location, then correct following path:
-	- _Projects/Template/.vscode/settings.json:15:_
-		`"vcpkg.storageLocation": "C:\\Dev\\Tools\\vcpkg"`
+## 🔧 Getting Started
 
-### 7. Select **cmake Active Preset** as **Debug** or **Release**. For **Debugging**, be sure to use **Debug Preset**.
+### 1. 🖥️ Install Required Tools
+1. **Visual Studio Code:** [Download here](https://code.visualstudio.com/).
+2. **Git:** [Download here](https://git-scm.com/downloads).
+   - If installed in a custom directory, update this path in `Projects/<BoardName>/<ProjectName>/.vscode/settings.json` (line 5):
+     ```json
+     "path": "C:\Program Files\Git\bin\bash.exe"
+     ```
 
-### 8. Build the project.
-- You can Build by Clicking Build button at below panel.
-- Or Press **[CTRL + SHIFT + P]**. Type **cmake** and select **CMake: Build**.
-- Or Press **[CTRL + SHIFT + B]** for open tasks that are configured in _Projects/Template/.vscode/tasks.json_. Then, select **Build**.
-- If you select **Debug Preset**, then your build files will be generated in _Projects/Template/Build/Debug_. It is also true for **Release Preset**.
-- **hex**, **bin**, **elf**, **list**, **map**, **ssz**, **bsz** files will be generated in _Projects/Template/Build/Debug/Application/Application.*_
+### 2. 📥 Clone the Repository
+```bash
+cd C:/gd32-cmake
+# Clone the repository recursively to include submodules
+git clone --recursive https://github.com/burakenez/gd32l23x-demo-suites-cmake-vscode.git
+```
+- ⚠️ Avoid long directory paths to prevent build issues.
+- If downloading as a ZIP, manually include submodules in the `Tools` folder:
+  - `xpack-arm-none-eabi-gcc-11.3.1-1.1`
+  - `xpack-openocd-0.11.0-3`
 
-### 9. Start Debugging.
-- Go to **RUN AND DEBUG** in **VS Code**. Select **Debug with OpenOCD**. This is configured in _Projects/Template/.vscode/launch.json_.
-- Click **Start Debugging** Icon or Press **[F5]** in your keyboard.
+### 3. 📂 Open Project Folder
+- Open `Projects/<BoardName>/<ProjectName>` directly in Visual Studio Code.
 
-## Folder Hierarchy and File Descriptions
+### 4. 🧩 Install Recommended Extensions
+- Extensions listed in `Projects/<BoardName>/<ProjectName>/.vscode/extensions.json` will be auto-installed.
 
-- **Projects**
-	- **Template:** _Main template for a project using the GD32L23x microcontroller._
-		- **.vscode**
-			- **extensions.json:** _Specifies recommended VS Code extensions for the project._
-			- **launch.json:** _Configures the debugging settings for the project in VS Code._
-			- **settings.json:** _Customizes workspace-specific VS Code settings._
-			- **tasks.json:** _Defines tasks for building and other automated processes in VS Code._
-		- **Application**
-			- **Core**
-				- **Inc**
-					- **gd32l23x_it.h:** _Header file for interrupt handling functions specific to the GD32L23x microcontroller._
-					- **gd32l23x_libopt.h:** _Header for library options and configurations._
-					- **systick.h:** _Header for SysTick timer-related definitions and functions._
-				- **Src**
-					- **gd32l23x_it.c:** _Source file implementing interrupt handlers for the GD32L23x._
-					- **main.c:** _Main application file where the program's entry point and main loop are defined._
-					- **system_gd32l23x.c:** _Contains system-level initialization, such as setting up the clock._
-					- **systick.c:** _Source file for SysTick timer configurations and related functions._
-			- **Startup**
-				- **startup_gd32l23x.s:** _Assembly file containing the startup code, interrupt vector table, and initialization routines._
-			- **User**
-				- **syscalls.c:** _Implements system calls and I/O functions for the application, typically used for retargeting._
-			- **CMakeLists.txt:** _Specifies CMake instructions for compiling the application._
-			- **readme.txt:** _Basic information or instructions about the project setup and usage._
-		- **Build**
-			- **Debug**
-				- **Application**
-					- **Application.bin:** _Binary output file for flashing onto the device._
-					- **Application.bsz:** _Binary symbol file, usually for debugging purposes._
-					- **Application.elf:** _ELF format file that includes debugging symbols for detailed inspection._
-					- **Application.hex:** _Intel HEX file format, another option for programming microcontrollers._
-					- **Application.list:** _Assembly list of the program, useful for debugging._
-					- **Application.map:** _Memory map file providing details about code and data placement._
-					- **Application.ssz:** _Additional binary file, possibly for debugging or backup._
-		- **cmake**
-			- **arm-none-eabi-gcc.cmake:** _Toolchain file specifying settings for the ARM GCC compiler._
-			- **project.cmake:** _General project-specific CMake settings._
-		- **Drivers**
-			- **BSP**
-				- **GD32L233C_START**
-					- **CMakeLists.txt:** _CMake configuration for the board support package (BSP) of the GD32L233C_START board._
-			- **CMSIS**
-				- **CMakeLists.txt:** _CMake configuration for CMSIS (Cortex Microcontroller Software Interface Standard)._
-			- **GD32L23x_standard_peripheral**
-				- **CMakeLists.txt:** _CMake configuration for the GD32L23x standard peripheral library._
-		- **Middlewares:** _Folder to include any middleware libraries or software stacks required for the project._
-		- **Utilities:** _Utility functions, libraries, or scripts that support the main application._
-		- **.clang-format:** _Specifies code formatting rules for consistent style across files._
-		- **CMakeLists.txt:** _Main CMake file that includes all necessary subdirectories and configurations for the project._
-		- **CMakePresets.json:** _Defines CMake configuration presets for building the project with different settings._
-		- **gd32l23x_flash.ld:** _Linker script defining memory regions and their usage for the GD32L23x._
-		- **GD32L23x.svd:** _System View Description (SVD) file for the GD32L23x microcontroller, used for debugging and register descriptions._
-		- **vcpkg-configuration.json:** _Configuration file for vcpkg, a package manager that manages C++ library dependencies for the project._
+### 5. ⚙️ Configure `cmake` and `ninja`
+- These tools will be downloaded automatically using `vcpkg-configuration.json`.
+- Update the vcpkg storage location in `Projects/<BoardName>/<ProjectName>/.vscode/settings.json` (line 15):
+  ```json
+  "vcpkg.storageLocation": "C:\Dev\Tools\vcpkg"
+  ```
+- Add paths to environment variables:
+  - `cmake.exe`: `C:\Dev\Tools\vcpkg\root\downloads\artifacts\vcpkg-artifacts-arm\tools.kitware.cmake\3.28.4\bin`
+  - `ninja.exe`: `C:\Dev\Tools\vcpkg\root\downloads\artifacts\vcpkg-artifacts-arm\tools.ninja.build.ninja\1.12.0`
+- Restart your computer after installation.
+
+### 6. 🛠️ Set CMake Preset
+- Select **Debug** or **Release** from the CMake presets menu in VS Code.
+
+### 7. 🔨 Build the Project
+- Build options:
+  - Click the **Build** button in the bottom panel.
+  - Press `[CTRL + SHIFT + P]`, search for **CMake: Build**, and run.
+  - Press `[CTRL + SHIFT + B]` to open configured tasks and select **Build**.
+- Output files are generated in `Projects/<BoardName>/<ProjectName>/Build/Debug/Application/` or `.../Release/Application/`.
+
+### 8. 🐞 Debug the Project
+- Go to **Run and Debug** in VS Code.
+- Select **Debug with OpenOCD** and press `[F5]` or click **Start Debugging**.
+
+---
+
+## 📂 Folder Structure
+
+```plaintext
+┌── Drivers  # Contains low-level drivers for hardware abstraction and CMSIS compatibility.
+├── Middlewares  # Houses middleware libraries and third-party integrations.
+├── Projects  # Holds board-specific project examples.
+│   └── <BoardName>
+│       └── <ProjectName>
+│           ├── .vscode
+│           │   ├── extensions.json      # Specifies recommended VS Code extensions for automatic installation.
+│           │   ├── launch.json          # Debugging configuration, including paths to toolchain binaries.
+│           │   ├── settings.json        # Project-specific workspace settings, such as paths for external tools.
+│           │   └── tasks.json           # Defines build tasks and automation scripts for the VS Code environment.
+│           ├── Application
+│           │   ├── Core
+│           │   │   ├── Inc
+│           │   │   │   ├── gd32l23x_it.h  # Interrupt handler declarations specific to GD32L23x.
+│           │   │   │   ├── gd32l23x_libopt.h  # Library options and configurations for efficient use.
+│           │   │   │   └── systick.h  # Definitions and declarations related to the SysTick timer.
+│           │   │   ├── Src
+│           │   │   │   ├── gd32l23x_it.c  # Interrupt service routine implementations.
+│           │   │   │   ├── main.c  # Entry point of the application, containing the main logic and system initialization.
+│           │   │   │   ├── system_gd32l23x.c  # System initialization, clock setup, and core configurations.
+│           │   │   │   └── systick.c  # SysTick timer setup and related functionalities.
+│           │   ├── Startup
+│           │   │   └── startup_gd32l23x.s  # Assembly code for initialization and vector table setup.
+│           │   ├── User
+│           │   │   └── syscalls.c  # Implements low-level system calls and I/O retargeting for the project.
+│           │   ├── CMakeLists.txt  # CMake build instructions for the application.
+│           │   └── readme.txt  # Brief notes and usage instructions for the application folder.
+│           ├── Build
+│           │   ├── Debug
+│           │   │   └── Application
+│           │   │       ├── Application.bin  # Binary file ready for flashing to the device.
+│           │   │       ├── Application.elf  # Executable and Linkable Format file with debugging symbols.
+│           │   │       ├── Application.hex  # Intel HEX file format for programming the microcontroller.
+│           │   │       ├── Application.map  # Memory map of the application.
+│           │   │       ├── Application.list # Assembly listing of the code.
+│           │   │       └── Other files...   # Includes additional build outputs such as symbol tables.
+│           ├── cmake
+│           │   ├── arm-none-eabi-gcc.cmake  # Specifies toolchain settings for ARM GCC.
+│           │   └── project.cmake  # General project-wide CMake configurations.
+│           ├── Drivers
+│           │   ├── BSP/GD32L235R_EVAL  # Board support package configurations and drivers for GD32L235R_EVAL.
+│           │   ├── CMSIS  # CMSIS drivers for Cortex-M processors, supporting GD32L23x.
+│           │   └── GD32L23x_standard_peripheral  # Peripheral library for GD32L23x.
+│           ├── Middlewares  # Additional middleware or third-party libraries used in the project.
+│           ├── Utilities  # Utility scripts, tools, and additional helper files for development.
+│           ├── .clang-format  # Code formatting rules for maintaining a consistent coding style.
+│           ├── CMakeLists.txt  # Main CMake build file for the entire project.
+│           ├── CMakePresets.json  # Preset configurations for easier CMake builds.
+│           ├── gd32l23x_flash.ld  # Linker script for defining memory regions and placements.
+│           └── GD32L23x.svd  # System View Description file for debugging and register definitions. 
+├── Tools  # Compilers, debuggers, and other tools required for building and debugging.
+└── Utilities  # Shared utilities and helper scripts applicable across projects.
+```
+
+---
+
+## 📚 Additional Information
+Feel free to customize this template as per your project requirements. Contributions and feedback are always welcome!

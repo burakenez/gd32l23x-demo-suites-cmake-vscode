@@ -2,11 +2,11 @@
     \file    usbd_msc_core.c
     \brief   USB MSC device class core functions
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification, 
 are permitted provided that the following conditions are met:
@@ -42,14 +42,13 @@ OF SUCH DAMAGE.
 #define USBD_PID                    0x128FU
 
 /* local function prototypes ('static') */
-static uint8_t msc_core_init   (usb_dev *udev, uint8_t config_index);
-static uint8_t msc_core_deinit (usb_dev *udev, uint8_t config_index);
-static uint8_t msc_core_req    (usb_dev *udev, usb_req *req);
-static void msc_core_in        (usb_dev *udev, uint8_t ep_num);
-static void msc_core_out       (usb_dev *udev, uint8_t ep_num);
+static uint8_t msc_core_init(usb_dev *udev, uint8_t config_index);
+static uint8_t msc_core_deinit(usb_dev *udev, uint8_t config_index);
+static uint8_t msc_core_req(usb_dev *udev, usb_req *req);
+static void msc_core_in(usb_dev *udev, uint8_t ep_num);
+static void msc_core_out(usb_dev *udev, uint8_t ep_num);
 
-usb_class msc_class = 
-{
+usb_class msc_class = {
     .init     = msc_core_init,
     .deinit   = msc_core_deinit,
 
@@ -61,8 +60,7 @@ usb_class msc_class =
 
 /* note: it should use the C99 standard when compiling the below codes */
 /* USB standard device descriptor */
-__ALIGNED(2) usb_desc_dev msc_dev_desc =
-{
+__ALIGNED(2) usb_desc_dev msc_dev_desc = {
     .header = {
         .bLength           = USB_DEV_DESC_LEN, 
         .bDescriptorType   = USB_DESCTYPE_DEV
@@ -82,8 +80,7 @@ __ALIGNED(2) usb_desc_dev msc_dev_desc =
 };
 
 /* USB device configuration descriptor */
-__ALIGNED(2) usb_desc_config_set msc_config_desc = 
-{
+__ALIGNED(2) usb_desc_config_set msc_config_desc = {
     .config = 
     {
         .header = {
@@ -139,8 +136,7 @@ __ALIGNED(2) usb_desc_config_set msc_config_desc =
 };
 
 /* USB language ID descriptor */
-__ALIGNED(2) static usb_desc_LANGID usbd_language_id_desc = 
-{
+__ALIGNED(2) static usb_desc_LANGID usbd_language_id_desc = {
     .header = 
      {
          .bLength            = sizeof(usb_desc_LANGID), 
@@ -150,8 +146,7 @@ __ALIGNED(2) static usb_desc_LANGID usbd_language_id_desc =
 };
 
 /* USB manufacture string */
-__ALIGNED(2) static usb_desc_str manufacturer_string = 
-{
+__ALIGNED(2) static usb_desc_str manufacturer_string = {
     .header = 
      {
          .bLength         = USB_STRING_LEN(10U), 
@@ -161,8 +156,7 @@ __ALIGNED(2) static usb_desc_str manufacturer_string =
 };
 
 /* USB product string */
-__ALIGNED(2) static __ALIGNED(2) usb_desc_str product_string = 
-{
+__ALIGNED(2) static __ALIGNED(2) usb_desc_str product_string = {
     .header = 
      {
          .bLength         = USB_STRING_LEN(12U), 
@@ -172,8 +166,7 @@ __ALIGNED(2) static __ALIGNED(2) usb_desc_str product_string =
 };
 
 /* USBD serial string */
-__ALIGNED(2) static usb_desc_str serial_string = 
-{
+__ALIGNED(2) static usb_desc_str serial_string = {
     .header = 
      {
          .bLength         = USB_STRING_LEN(12U), 
@@ -182,16 +175,14 @@ __ALIGNED(2) static usb_desc_str serial_string =
 };
 
 /* USB string descriptor */
-uint8_t* usbd_msc_strings[] = 
-{
+uint8_t* usbd_msc_strings[] = {
     [STR_IDX_LANGID]  = (uint8_t *)&usbd_language_id_desc,
     [STR_IDX_MFC]     = (uint8_t *)&manufacturer_string,
     [STR_IDX_PRODUCT] = (uint8_t *)&product_string,
     [STR_IDX_SERIAL]  = (uint8_t *)&serial_string
 };
 
-usb_desc msc_desc =
-{
+usb_desc msc_desc = {
     .dev_desc    = (uint8_t *)&msc_dev_desc,
     .config_desc = (uint8_t *)&msc_config_desc,
     .strings     = usbd_msc_strings
@@ -204,7 +195,7 @@ usb_desc msc_desc =
     \param[out] none
     \retval     USB device operation status
 */
-static uint8_t msc_core_init (usb_dev *udev, uint8_t config_index)
+static uint8_t msc_core_init(usb_dev *udev, uint8_t config_index)
 {
     __ALIGNED(2) static usbd_msc_handler msc_handler;
 
@@ -212,10 +203,10 @@ static uint8_t msc_core_init (usb_dev *udev, uint8_t config_index)
 
     udev->class_data[USBD_MSC_INTERFACE] = (void *)&msc_handler;
 
-    /* initialize Tx endpoint */
+    /* initialize TX endpoint */
     usbd_ep_init(udev, EP_BUF_SNG, BULK_TX_ADDR, &(msc_config_desc.msc_epin));
 
-    /* initialize Rx endpoint */
+    /* initialize RX endpoint */
     usbd_ep_init(udev, EP_BUF_SNG, BULK_RX_ADDR, &(msc_config_desc.msc_epout));
 
     udev->ep_transc[EP_ID(MSC_IN_EP)][TRANSC_IN] = msc_class.data_in;
@@ -234,11 +225,11 @@ static uint8_t msc_core_init (usb_dev *udev, uint8_t config_index)
     \param[out] none
     \retval     USB device operation status
 */
-static uint8_t msc_core_deinit (usb_dev *udev, uint8_t config_index)
+static uint8_t msc_core_deinit(usb_dev *udev, uint8_t config_index)
 {
     /* clear MSC endpoints */
-    usbd_ep_deinit (udev, MSC_IN_EP);
-    usbd_ep_deinit (udev, MSC_OUT_EP);
+    usbd_ep_deinit(udev, MSC_IN_EP);
+    usbd_ep_deinit(udev, MSC_OUT_EP);
 
     /* deinitialize the BBB layer */
     msc_bbb_deinit(udev);
@@ -253,35 +244,35 @@ static uint8_t msc_core_deinit (usb_dev *udev, uint8_t config_index)
     \param[out] none
     \retval     USB device operation status
 */
-static uint8_t msc_core_req (usb_dev *udev, usb_req *req)
+static uint8_t msc_core_req(usb_dev *udev, usb_req *req)
 {
     __ALIGNED(2) static uint8_t usbd_msc_maxlun = 0U;
 
-    switch (req->bRequest) {
+    switch(req->bRequest) {
     case BBB_GET_MAX_LUN :
-        if((0U == req->wValue) && 
-            (1U == req->wLength) &&
+        if((0U == req->wValue) && \
+            (1U == req->wLength) && \
             (0x80U == (req->bmRequestType & 0x80U))) {
             usbd_msc_maxlun = (uint8_t)usbd_mem_fops->mem_maxlun();
 
             usb_transc_config(&udev->transc_in[0], &usbd_msc_maxlun, 1U, 0U);
         } else {
-            return USBD_FAIL; 
+            return USBD_FAIL;
         }
         break;
 
-    case BBB_RESET :
-        if((0U == req->wValue) && 
-            (0U == req->wLength) &&
-             (0x80U != (req->bmRequestType & 0x80U))) {
+    case BBB_RESET:
+        if((0U == req->wValue) && \
+              (0U == req->wLength) && \
+                (0x80U != (req->bmRequestType & 0x80U))) {
             msc_bbb_reset(udev);
         } else {
-            return USBD_FAIL; 
+            return USBD_FAIL;
         }
         break;
 
     case USB_CLEAR_FEATURE:
-        msc_bbb_clrfeature (udev, (uint8_t)req->wIndex);
+        msc_bbb_clrfeature(udev, (uint8_t)req->wIndex);
         break;
 
     default:
@@ -298,7 +289,7 @@ static uint8_t msc_core_req (usb_dev *udev, usb_req *req)
     \param[out] none
     \retval     none
 */
-static void msc_core_in (usb_dev *udev, uint8_t ep_num)
+static void msc_core_in(usb_dev *udev, uint8_t ep_num)
 {
     msc_bbb_data_in(udev, ep_num);
 }
@@ -310,7 +301,7 @@ static void msc_core_in (usb_dev *udev, uint8_t ep_num)
     \param[out] none
     \retval     none
 */
-static void msc_core_out (usb_dev *udev, uint8_t ep_num)
+static void msc_core_out(usb_dev *udev, uint8_t ep_num)
 {
-    msc_bbb_data_out (udev, ep_num);
+    msc_bbb_data_out(udev, ep_num);
 }

@@ -2,11 +2,11 @@
     \file    audio_out_itf.c
     \brief   audio OUT (playback) interface functions
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -32,19 +32,17 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 OF SUCH DAMAGE.
 */
 
-#include "audio_core.h"
 #include "audio_out_itf.h"
 
 /* local function prototypes ('static') */
-static uint8_t init         (uint32_t audio_freq, uint32_t volume);
-static uint8_t deinit       (uint32_t options);
-static uint8_t audio_cmd    (uint8_t* pbuf, uint32_t size, uint8_t cmd);
+static uint8_t init(uint32_t audio_freq, uint32_t volume);
+static uint8_t deinit(uint32_t options);
+static uint8_t audio_cmd(uint8_t *pbuf, uint32_t size, uint8_t cmd);
 
-audio_fops_struct audio_out_fops = 
-{
+audio_fops_struct audio_out_fops = {
     .audio_init   = init,
     .audio_deinit = deinit,
-    .audio_cmd    = audio_cmd,
+    .audio_cmd    = audio_cmd
 };
 
 static uint8_t audio_state = AD_STATE_INACTIVE;
@@ -56,12 +54,12 @@ static uint8_t audio_state = AD_STATE_INACTIVE;
     \param[out] none
     \retval     AD_OK if all operations succeed, otherwise, AD_FAIL.
 */
-static uint8_t init (uint32_t audio_freq, uint32_t volume)
+static uint8_t init(uint32_t audio_freq, uint32_t volume)
 {
     static uint32_t initialized = 0U;
 
     /* check if the low layer has already been initialized */
-    if (0U == initialized) {
+    if(0U == initialized) {
         /* initialize GPIO */
         codec_gpio_init();
 
@@ -87,7 +85,7 @@ static uint8_t init (uint32_t audio_freq, uint32_t volume)
     \param[out] none
     \retval     AD_OK if all operations succeed, otherwise, AD_FAIL.
 */
-static uint8_t deinit (uint32_t options)
+static uint8_t deinit(uint32_t options)
 {
     /* update the audio state machine */
     audio_state = AD_STATE_INACTIVE;
@@ -106,28 +104,28 @@ static uint8_t deinit (uint32_t options)
     \param[out] none
     \retval     AD_OK if all operations succeed, otherwise, AD_FAIL.
 */
-static uint8_t audio_cmd (uint8_t* pbuf, uint32_t size, uint8_t cmd)
+static uint8_t audio_cmd(uint8_t *pbuf, uint32_t size, uint8_t cmd)
 {
     /* check the current state */
-    if ((AD_STATE_INACTIVE == audio_state) || (AD_STATE_ERROR == audio_state)) {
+    if((AD_STATE_INACTIVE == audio_state) || (AD_STATE_ERROR == audio_state)) {
         audio_state = AD_STATE_ERROR;
 
         return AD_FAIL;
     }
 
-    switch (cmd) {
+    switch(cmd) {
     /* process the play command */
     case AD_CMD_PLAY:
         /* if current state is active or stopped */
-        if ((AD_STATE_ACTIVE == audio_state) || \
-            (AD_STATE_STOPPED == audio_state) || \
-            (AD_STATE_PLAYING == audio_state)) {
+        if((AD_STATE_ACTIVE == audio_state) || \
+                (AD_STATE_STOPPED == audio_state) || \
+                (AD_STATE_PLAYING == audio_state)) {
             audio_play((uint32_t)pbuf, size);
             audio_state = AD_STATE_PLAYING;
 
             return AD_OK;
-        } else if (AD_STATE_PAUSED == audio_state) {
-            audio_pause_resume(AD_RESUME, (uint32_t)pbuf, (size/2));
+        } else if(AD_STATE_PAUSED == audio_state) {
+            audio_pause_resume(AD_RESUME, (uint32_t)pbuf, (size / 2U));
             audio_state = AD_STATE_PLAYING;
 
             return AD_OK;
@@ -137,7 +135,7 @@ static uint8_t audio_cmd (uint8_t* pbuf, uint32_t size, uint8_t cmd)
 
     /* process the stop command */
     case AD_CMD_STOP:
-        if (AD_STATE_PLAYING != audio_state) {
+        if(AD_STATE_PLAYING != audio_state) {
             /* unsupported command */
             return AD_FAIL;
         } else {
@@ -149,11 +147,11 @@ static uint8_t audio_cmd (uint8_t* pbuf, uint32_t size, uint8_t cmd)
 
     /* process the pause command */
     case AD_CMD_PAUSE:
-        if (AD_STATE_PLAYING != audio_state) {
+        if(AD_STATE_PLAYING != audio_state) {
             /* unsupported command */
             return AD_FAIL;
         } else {
-            audio_pause_resume(AD_PAUSE, (uint32_t)pbuf, (size/2));
+            audio_pause_resume(AD_PAUSE, (uint32_t)pbuf, (size / 2U));
             audio_state = AD_STATE_PAUSED;
 
             return AD_OK;

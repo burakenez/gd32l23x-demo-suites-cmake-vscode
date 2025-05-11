@@ -2,11 +2,11 @@
     \file    usbd_lld_int.c
     \brief   USB device low level interrupt routines
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -34,6 +34,8 @@ OF SUCH DAMAGE.
 
 #include "usbd_lld_int.h"
 #include "usbd_lld_core.h"
+
+#include <stdio.h>
 
 /* local function prototypes ('static') */
 static void usbd_int_suspend(usb_dev *udev);
@@ -140,7 +142,7 @@ void usbd_isr(void)
 
                     if(USBD_EPxCS(ep_num) & EPxCS_SETUP) {
 
-                        if(ep_num == 0U) {
+                        if(0U == ep_num) {
                             udev->ep_transc[ep_num][TRANSC_SETUP](udev, ep_num);
                         } else {
                             return;

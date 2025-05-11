@@ -2,11 +2,11 @@
     \file    usbd_enum.h
     \brief   USB enumeration definitions
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -32,25 +32,19 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 OF SUCH DAMAGE.
 */
 
-#ifndef __USBD_ENUM_H
-#define __USBD_ENUM_H
+#ifndef USBD_ENUM_H
+#define USBD_ENUM_H
 
 #include "usbd_core.h"
 
-#ifndef NULL
-    #define NULL                  0U
-#endif
-
 /* request state enumeration */
-typedef enum _usb_reqsta 
-{
+typedef enum _usb_reqsta {
     REQ_SUPP                      = 0x0U,        /*!< supported request */
     REQ_NOTSUPP                   = 0x1U         /*!< unsupported request */
 } usb_reqsta;
 
 /* string descriptor index enumeration */
-enum _str_index
-{
+enum _str_index {
     STR_IDX_LANGID                = 0x0U,        /*!< language ID string index */
     STR_IDX_MFC                   = 0x1U,        /*!< manufacturer string index */
     STR_IDX_PRODUCT               = 0x2U,        /*!< product string index */
@@ -61,15 +55,13 @@ enum _str_index
 };
 
 /* PWR status enumeration */
-typedef enum 
-{
+typedef enum {
     USB_PWRSTA_SELF_POWERED       = 0x1U,        /*!< USB is in self powered status */
-    USB_PWRSTA_REMOTE_WAKEUP      = 0x2U,        /*!< USB is in remote wakeup status */
+    USB_PWRSTA_REMOTE_WAKEUP      = 0x2U         /*!< USB is in remote wakeup status */
 } usb_pwrsta;
 
 /* USB endpoint feature enumeration */
-typedef enum
-{
+typedef enum {
     USB_FEATURE_EP_HALT           = 0x0U,        /*!< USB has endpoint halt feature */
     USB_FEATURE_REMOTE_WAKEUP     = 0x1U,        /*!< USB has endpoint remote wakeup feature */
     USB_FEATURE_TEST_MODE         = 0x2U         /*!< USB has endpoint test mode feature */
@@ -93,7 +85,7 @@ typedef enum
 
 #define USB_MIN(a, b)             (((a) < (b)) ? (a) : (b))
 
-#define CTL_EP(ep)                (((ep) == 0x00U) || ((ep) == 0x80U))
+#define CTL_EP(ep)                ((0x00U == (ep)) || (0x80U == (ep)))
 
 /* function declarations */
 /* handle USB standard device request */
@@ -105,4 +97,4 @@ usb_reqsta usbd_vendor_request(usb_dev *udev, usb_req *req);
 /* get serial string */
 void serial_string_get(uint16_t *unicode_str);
 
-#endif /* __USBD_ENUM_H */
+#endif /* USBD_ENUM_H */

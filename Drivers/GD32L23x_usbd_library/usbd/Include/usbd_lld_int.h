@@ -2,11 +2,11 @@
     \file    usbd_lld_int.h
     \brief   USB device low level interrupt handler
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -32,10 +32,9 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 OF SUCH DAMAGE.
 */
 
-#ifndef __USBD_LLD_INT_H
-#define __USBD_LLD_INT_H
+#ifndef USBD_LLD_INT_H
+#define USBD_LLD_INT_H
 
-#include "usbd_core.h"
 #include "usbd_enum.h"
 #include "usbd_pwr.h"
 
@@ -45,4 +44,4 @@ void usbd_isr(void);
 /* handle USB high priority successful transfer event */
 void usbd_int_hpst(usb_dev *udev);
 
-#endif /* __USBD_LLD_INT_H */
+#endif /* USBD_LLD_INT_H */

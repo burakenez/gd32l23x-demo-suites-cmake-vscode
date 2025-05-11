@@ -2,11 +2,11 @@
     \file    custom_hid_core.h
     \brief   definitions for HID core
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -32,25 +32,24 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 OF SUCH DAMAGE.
 */
 
-#ifndef __CUSTOM_HID_CORE_H
-#define __CUSTOM_HID_CORE_H
+#ifndef CUSTOM_HID_CORE_H
+#define CUSTOM_HID_CORE_H
 
 #include "usbd_enum.h"
 #include "usb_hid.h"
 
-#define DESC_LEN_REPORT             96U
-#define DESC_LEN_CONFIG             41U
+#define DESC_LEN_REPORT             96U                     /*!< report descriptor length */
+#define DESC_LEN_CONFIG             41U                     /*!< configuration descriptor length */
 
-#define MAX_PERIPH_NUM              4U
+#define MAX_PERIPH_NUM              4U                      /*!< maximum peripheral number */
 
-typedef struct
-{
-    __ALIGNED(2) uint8_t data[2];
+typedef struct {
+    __ALIGNED(2) uint8_t data[2];                           /*!< custom HID data packet buff */
 
-    __ALIGNED(2) uint8_t idlestate;
-    __ALIGNED(2) uint8_t protocol;
+    __ALIGNED(2) uint8_t idlestate;                         /*!< idle state */
+    __ALIGNED(2) uint8_t protocol;                          /*!< HID protocol */
 
-    uint8_t reportID;
+    uint8_t reportID;                                       /*!< custom HID report id */
 } custom_hid_handler;
 
 typedef struct {
@@ -66,4 +65,4 @@ uint8_t custom_hid_itfop_register(usb_dev *udev, hid_fop_handler *hid_fop);
 /* send custom HID report */
 uint8_t custom_hid_report_send(usb_dev *udev, uint8_t *report, uint16_t len);
 
-#endif /* __CUSTOM_HID_CORE_H */
+#endif /* CUSTOM_HID_CORE_H */

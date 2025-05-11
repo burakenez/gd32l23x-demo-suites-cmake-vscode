@@ -2,11 +2,11 @@
     \file    usb_iap_core.c
     \brief   IAP driver
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -32,17 +32,18 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 OF SUCH DAMAGE.
 */
 
-#include <string.h>
 #include "usbd_transc.h"
 #include "usb_iap_core.h"
+#include "flash_operation.h"
+
+#include <string.h>
 
 #define USBD_VID                     0x28E9U
 #define USBD_PID                     0x028BU
 
 /* Note:it should use the C99 standard when compiling the below codes */
 /* USB standard device descriptor */
-__ALIGNED(2) usb_desc_dev iap_dev_desc =
-{
+__ALIGNED(2) usb_desc_dev iap_dev_desc = {
     .header = 
      {
          .bLength          = USB_DEV_DESC_LEN, 
@@ -63,8 +64,7 @@ __ALIGNED(2) usb_desc_dev iap_dev_desc =
 };
 
 /* USB device configure descriptor */
-__ALIGNED(2) usb_hid_desc_config_set iap_config_desc = 
-{
+__ALIGNED(2) usb_hid_desc_config_set iap_config_desc = {
     .config = 
     {
         .header = 
@@ -138,8 +138,7 @@ __ALIGNED(2) usb_hid_desc_config_set iap_config_desc =
 };
 
 /* USB language ID Descriptor */
-__ALIGNED(2) static usb_desc_LANGID usbd_language_id_desc = 
-{
+__ALIGNED(2) static usb_desc_LANGID usbd_language_id_desc = {
     .header = 
      {
          .bLength         = sizeof(usb_desc_LANGID), 
@@ -149,40 +148,36 @@ __ALIGNED(2) static usb_desc_LANGID usbd_language_id_desc =
 };
 
 /* USB manufacture string */
-__ALIGNED(2) static usb_desc_str manufacturer_string = 
-{
+__ALIGNED(2) static usb_desc_str manufacturer_string = {
     .header = 
      {
          .bLength         = USB_STRING_LEN(10U), 
-         .bDescriptorType = USB_DESCTYPE_STR,
+         .bDescriptorType = USB_DESCTYPE_STR
      },
     .unicode_string = {'G', 'i', 'g', 'a', 'D', 'e', 'v', 'i', 'c', 'e'}
 };
 
 /* USB product string */
-__ALIGNED(2) static usb_desc_str product_string = 
-{
+__ALIGNED(2) static usb_desc_str product_string = {
     .header = 
      {
          .bLength         = USB_STRING_LEN(12U), 
-         .bDescriptorType = USB_DESCTYPE_STR,
+         .bDescriptorType = USB_DESCTYPE_STR
      },
     .unicode_string = {'G', 'D', '3', '2', '-', 'U', 'S', 'B', '_', 'I', 'A', 'P'}
 };
 
 /* USB serial string */
-__ALIGNED(2) static usb_desc_str serial_string = 
-{
+__ALIGNED(2) static usb_desc_str serial_string = {
     .header = 
      {
          .bLength         = USB_STRING_LEN(2U), 
-         .bDescriptorType = USB_DESCTYPE_STR,
+         .bDescriptorType = USB_DESCTYPE_STR
      }
 };
 
 /* USB string descriptor set */
-uint8_t* usbd_iap_strings[] = 
-{
+uint8_t* usbd_iap_strings[] = {
     [STR_IDX_LANGID]  = (uint8_t *)&usbd_language_id_desc,
     [STR_IDX_MFC]     = (uint8_t *)&manufacturer_string,
     [STR_IDX_PRODUCT] = (uint8_t *)&product_string,
@@ -196,10 +191,20 @@ usb_desc iap_desc = {
 };
 
 /* local function prototypes ('static') */
-static uint8_t iap_init        (usb_dev *udev, uint8_t config_index);
-static uint8_t iap_deinit      (usb_dev *udev, uint8_t config_index);
-static uint8_t iap_req_handler (usb_dev *udev, usb_req *req);
-static void    iap_data_out    (usb_dev *udev, uint8_t ep_num);
+static uint8_t iap_init(usb_dev *udev, uint8_t config_index);
+static uint8_t iap_deinit(usb_dev *udev, uint8_t config_index);
+static uint8_t iap_req_handler(usb_dev *udev, usb_req *req);
+static void    iap_data_out(usb_dev *udev, uint8_t ep_num);
+
+/* IAP requests management functions */
+static void iap_req_erase(usb_dev *udev);
+static void iap_req_download(usb_dev *udev);
+static void iap_req_read_optionbyte(usb_dev *udev);
+static void iap_req_write_optionbyte(usb_dev *udev);
+static void iap_req_leave(usb_dev *udev);
+static void iap_address_send(usb_dev *udev);
+static void iap_req_upload(usb_dev *udev);
+static void iap_check_rdp(usb_dev *udev);
 
 usb_class iap_class = {
     .init            = iap_init,
@@ -209,8 +214,7 @@ usb_class iap_class = {
 };
 
 /* USB custom HID device report descriptor */
-__ALIGNED(2) const uint8_t iap_report_desc[USB_DESC_LEN_IAP_REPORT] =
-{
+__ALIGNED(2) const uint8_t iap_report_desc[USB_DESC_LEN_IAP_REPORT] = {
     0x05, 0x01,     /* USAGE_PAGE (Generic Desktop)   */
     0x09, 0x00,     /* USAGE (Custom Device)          */
     0xa1, 0x01,     /* COLLECTION (Application)       */
@@ -237,14 +241,6 @@ __ALIGNED(2) const uint8_t iap_report_desc[USB_DESC_LEN_IAP_REPORT] =
     0xc0            /* END_COLLECTION                 */
 };
 
-/* IAP requests management functions */
-static void iap_req_erase     (usb_dev *udev);
-static void iap_req_dnload    (usb_dev *udev);
-static void iap_req_optionbyte(usb_dev *udev);
-static void iap_req_leave     (usb_dev *udev);
-static void iap_address_send  (usb_dev *udev);
-static void iap_data_write    (uint8_t *data, uint32_t addr, uint32_t len);
-
 /*!
     \brief      initialize the HID device
     \param[in]  udev: pointer to USB device instance
@@ -261,9 +257,6 @@ static uint8_t iap_init(usb_dev *udev, uint8_t config_index)
 
     /* initialize RX endpoint */
     usbd_ep_init(udev, EP_BUF_SNG, INT_RX_ADDR, &(iap_config_desc.hid_epout));
-
-    /* unlock the internal flash */
-    fmc_unlock();
 
     memset((void *)&iap_handler, 0, sizeof(usbd_iap_handler));
 
@@ -289,11 +282,8 @@ static uint8_t iap_init(usb_dev *udev, uint8_t config_index)
 static uint8_t iap_deinit(usb_dev *udev, uint8_t config_index)
 {
     /* deinitialize HID endpoints */
-    usbd_ep_deinit (udev, IAP_IN_EP);
-    usbd_ep_deinit (udev, IAP_OUT_EP);
-
-    /* lock the internal flash */
-    fmc_lock();
+    usbd_ep_deinit(udev, IAP_IN_EP);
+    usbd_ep_deinit(udev, IAP_OUT_EP);
 
     return USBD_OK;
 }
@@ -311,7 +301,7 @@ static uint8_t iap_req_handler(usb_dev *udev, usb_req *req)
 
     usbd_iap_handler *iap = (usbd_iap_handler *)udev->class_data[USBD_IAP_INTERFACE];
 
-    switch (req->bRequest) {
+    switch(req->bRequest) {
     case GET_REPORT:
         /* no use for this driver */
         break;
@@ -349,10 +339,10 @@ static uint8_t iap_req_handler(usb_dev *udev, usb_req *req)
         break;
 
     case USB_GET_DESCRIPTOR:
-        if (USB_DESCTYPE_REPORT == (req->wValue >> 8)) {
-            usb_transc_config(&udev->transc_in[0], 
-                              (uint8_t *)iap_report_desc, 
-                              USB_MIN(USB_DESC_LEN_IAP_REPORT, req->wLength), 
+        if(USB_DESCTYPE_REPORT == (req->wValue >> 8)) {
+            usb_transc_config(&udev->transc_in[0], \
+                              (uint8_t *)iap_report_desc, \
+                              USB_MIN(USB_DESC_LEN_IAP_REPORT, req->wLength), \
                               0U);
 
             return REQ_SUPP;
@@ -377,18 +367,18 @@ static void iap_data_out(usb_dev *udev, uint8_t ep_num)
 {
     usbd_iap_handler *iap = (usbd_iap_handler *)udev->class_data[USBD_IAP_INTERFACE];
 
-    if (0x01U == iap->report_buf[0]) {
-        switch(iap->report_buf[1]) {
-        case IAP_DNLOAD:
-            iap_req_dnload(udev);
+    if (IAP_HOST_ID == iap->report_buf[0]){
+        switch (iap->report_buf[1]){
+        case IAP_DOWNLOAD:
+            iap_req_download(udev);
             break;
 
         case IAP_ERASE:
             iap_req_erase(udev);
             break;
 
-        case IAP_OPTION_BYTE:
-            iap_req_optionbyte(udev);
+        case IAP_READ_OPTION_BYTE:
+            iap_req_read_optionbyte(udev);
             break;
 
         case IAP_LEAVE:
@@ -397,6 +387,18 @@ static void iap_data_out(usb_dev *udev, uint8_t ep_num)
 
         case IAP_GETBIN_ADDRESS:
             iap_address_send(udev);
+            break;
+
+        case IAP_WRITE_OPTION_BYTE:
+            iap_req_write_optionbyte(udev);
+            break;
+
+        case IAP_UPLOAD:
+            iap_req_upload(udev);
+            break;
+
+        case IAP_CHECK_RDP:
+            iap_check_rdp(udev);
             break;
 
         default:
@@ -417,7 +419,7 @@ static void iap_data_out(usb_dev *udev, uint8_t ep_num)
 */
 uint8_t iap_report_send(usb_dev *udev, uint8_t *report, uint16_t len)
 {
-    usbd_ep_send (udev, IAP_IN_EP, report, len);
+    usbd_ep_send(udev, IAP_IN_EP, report, len);
 
     return USBD_OK;
 }
@@ -428,30 +430,60 @@ uint8_t iap_report_send(usb_dev *udev, uint8_t *report, uint16_t len)
     \param[out] none
     \retval     none
 */
-static void iap_req_dnload(usb_dev *udev)
+static void iap_req_download(usb_dev *udev)
 {
     usbd_iap_handler *iap = (usbd_iap_handler *)udev->class_data[USBD_IAP_INTERFACE];
 
-    if (0U != iap->transfer_times) {
-        if (1U == iap->transfer_times) {
-            if (0U == iap->lps) {
-                iap_data_write(&iap->report_buf[2], iap->base_address, TRANSFER_SIZE);
-            } else {
-                iap_data_write(&iap->report_buf[2], iap->base_address, iap->file_length % TRANSFER_SIZE);
-                iap->lps = 0U;
-            }
+    iap->dev_status[0] = IAP_DEVICE_ID;
 
-            iap->dev_status[0] = 0x02U;
-            iap->dev_status[1] = 0x02U;
-            iap_report_send (udev, iap->dev_status, IAP_IN_PACKET);
-        } else {
-            iap_data_write(&iap->report_buf[2], iap->base_address, TRANSFER_SIZE);
+    /* get the target address to download */
+    iap->base_address  = iap->report_buf[2];
+    iap->base_address |= (uint32_t)iap->report_buf[3] << 8U;
+    iap->base_address |= (uint32_t)iap->report_buf[4] << 16U;
+    iap->base_address |= (uint32_t)iap->report_buf[5] << 24U;
 
-            iap->base_address += TRANSFER_SIZE;
-        }
-
-        iap->transfer_times--;
+    /* program the target address */
+    if(FMC_READY == iap_data_write(&iap->report_buf[6], iap->base_address, TRANSFER_SIZE)) {
+        iap->dev_status[1] = OPERATION_SUCCESS;
+    } else {
+        iap->dev_status[1] = OPERATION_FAIL;
     }
+
+    iap_report_send (udev, iap->dev_status, IAP_IN_PACKET);
+
+}
+/*!
+    \brief      handle the IAP_WRITE_OPTION_BYTE request
+    \param[in]  udev: pointer to USB device instance
+    \param[out] none
+    \retval     none
+*/
+static void iap_req_write_optionbyte(usb_dev *udev)
+{
+    uint32_t option_byte_addr = 0;
+    uint16_t option_byte_size = 0;
+    usbd_iap_handler *iap = (usbd_iap_handler *)udev->class_data[USBD_IAP_INTERFACE];
+
+    /* get option byte address address */
+    option_byte_addr  = iap->report_buf[2];
+    option_byte_addr |= (uint32_t)iap->report_buf[3] << 8U;
+    option_byte_addr |= (uint32_t)iap->report_buf[4] << 16U;
+    option_byte_addr |= (uint32_t)iap->report_buf[5] << 24U;
+
+    /* get option byte address size */
+    if(OPT_BYTE_ADDR == option_byte_addr){
+       option_byte_size = OPT_BYTE_SIZE;
+    }
+
+    iap->dev_status[0] = IAP_DEVICE_ID;
+
+    /* write option byte address data */
+    if(FMC_READY == option_byte_write(option_byte_addr,&iap->report_buf[6],option_byte_size)) {
+        iap->dev_status[1] = OB_WRITE_SUCCESS;
+    } else {
+        iap->dev_status[1] = OPERATION_FAIL;
+    }
+    iap_report_send (udev, iap->dev_status, IAP_IN_PACKET);
 }
 
 /*!
@@ -462,48 +494,41 @@ static void iap_req_dnload(usb_dev *udev)
 */
 static void iap_req_erase(usb_dev *udev)
 {
-    uint32_t i, addr = 0U;
+    uint32_t addr = 0U;
 
     usbd_iap_handler *iap = (usbd_iap_handler *)udev->class_data[USBD_IAP_INTERFACE];
 
     /* get base address to erase */
-    iap->base_address = iap->report_buf[2];
+    iap->base_address  = iap->report_buf[2];
     iap->base_address |= (uint32_t)iap->report_buf[3] << 8;
     iap->base_address |= (uint32_t)iap->report_buf[4] << 16;
     iap->base_address |= (uint32_t)iap->report_buf[5] << 24;
 
-    iap->page_count = iap->report_buf[6];
-
     /* get file length */
-    iap->file_length = iap->report_buf[7];
-    iap->file_length |= (uint32_t)iap->report_buf[8] << 8;
-    iap->file_length |= (uint32_t)iap->report_buf[9] << 16;
-    iap->file_length |= (uint32_t)iap->report_buf[10] << 24;
+    iap->file_length = iap->report_buf[6];
+    iap->file_length |= (uint32_t)iap->report_buf[7] << 8;
+    iap->file_length |= (uint32_t)iap->report_buf[8] << 16;
+    iap->file_length |= (uint32_t)iap->report_buf[9] << 24;
 
-    /* compute last packet size and transfer times */
-    iap->lps = iap->file_length % TRANSFER_SIZE;
-    if (0U == iap->lps) {
-        iap->transfer_times = (uint16_t)(iap->file_length / TRANSFER_SIZE);
-    } else {
-        iap->transfer_times = (uint16_t)(iap->file_length / TRANSFER_SIZE + 1U);
-    }
 
     /* check if the address is in protected area */
-    if (IS_PROTECTED_AREA(iap->base_address)) {
+    if(IS_PROTECTED_AREA(iap->base_address)) {
         return;
     }
 
     addr = iap->base_address;
+    iap->dev_status[0] = IAP_DEVICE_ID;
 
-    for (i = 0U; i < iap->page_count; i ++) {
-        /* call the standard flash erase-page function */
-        fmc_page_erase(addr);
+    /* unlock the flash program erase controller */
+    fmc_unlock();
 
-        addr += PAGE_SIZE;
+    if(FMC_READY == flash_erase(addr, iap->file_length)){
+        iap->dev_status[1] = OPERATION_SUCCESS;
+    } else {
+        iap->dev_status[1] = OPERATION_FAIL;
     }
 
-    iap->dev_status[0] = 0x02U;
-    iap->dev_status[1] = 0x01U;
+    fmc_lock();
 
     usbd_ep_send(udev, IAP_IN_EP, iap->dev_status, IAP_IN_PACKET);
 }
@@ -514,19 +539,32 @@ static void iap_req_erase(usb_dev *udev)
     \param[out] none
     \retval     none
 */
-static void iap_req_optionbyte(usb_dev *udev)
+static void iap_req_read_optionbyte(usb_dev *udev)
 {
     uint8_t i = 0U;
-    uint32_t address = 0x1FFFF800U;
+    uint32_t option_size = 0U;
+    uint32_t temp;
+    uint32_t option_address = 0;
 
     usbd_iap_handler *iap = (usbd_iap_handler *)udev->class_data[USBD_IAP_INTERFACE];
+    /* read option address address */
+    option_address = iap->report_buf[2] + (iap->report_buf[3] << 8) +  (iap->report_buf[4] << 16) + (iap->report_buf[5] << 24);
 
-    iap->option_byte[0] = 0x02U;
+    iap->option_byte[0] = IAP_DEVICE_ID;
 
-    for (i = 1U; i < 17U; i++) {
-        iap->option_byte[i] = *(uint8_t *)address;
-        address++;
+    if(OPT_BYTE_ADDR == option_address){
+        option_size = OPT_BYTE_SIZE;
     }
+    /* read option address content */
+    for(i = 0U; i < (option_size / 4U); i++){
+        temp =  *(uint32_t *)option_address;
+        iap->option_byte[4*i + 5] = temp >> 24;
+        iap->option_byte[4*i + 4] = temp >> 16;
+        iap->option_byte[4*i + 3] = temp >> 8;
+        iap->option_byte[4*i + 2] = temp;
+        option_address = option_address + 4U;
+    }
+    iap->option_byte[1] = OPERATION_SUCCESS;
 
     iap_report_send(udev, iap->option_byte, IAP_IN_PACKET);
 }
@@ -539,11 +577,24 @@ static void iap_req_optionbyte(usb_dev *udev)
 */
 static void iap_req_leave(usb_dev *udev)
 {
-    /* lock the internal flash */
-    fmc_lock();
+    usbd_iap_handler *iap = (usbd_iap_handler *)udev->class_data[USBD_IAP_INTERFACE];
 
-    /* generate system reset to allow jumping to the user code */
-    NVIC_SystemReset();
+    /* get base address to erase */
+    iap->base_address  = iap->report_buf[2];
+    iap->base_address |= (uint32_t)iap->report_buf[3] << 8;
+    iap->base_address |= (uint32_t)iap->report_buf[4] << 16;
+    iap->base_address |= (uint32_t)iap->report_buf[5] << 24;
+
+    iap->dev_status[0] = IAP_DEVICE_ID;
+    iap->dev_status[1] = LEAVE_FINISH;
+
+    usbd_ep_send(udev, IAP_IN_EP, iap->dev_status, IAP_IN_PACKET);
+
+    usbd_disconnect(udev);
+
+    /* the interrupt of target application to jump is recommended to prior to the USBFS interrupt */
+    rcu_deinit();
+    jump_to_execute(iap->base_address);
 }
 
 /*!
@@ -556,62 +607,70 @@ static void iap_address_send(usb_dev *udev)
 {
     usbd_iap_handler *iap = (usbd_iap_handler *)udev->class_data[USBD_IAP_INTERFACE];
 
-    iap->bin_addr[0] = 0x02U;
+    iap->bin_addr[0] = IAP_DEVICE_ID;
 
+    /* get app boundary address */
     iap->bin_addr[1] = (uint8_t)(APP_LOADED_ADDR);
     iap->bin_addr[2] = (uint8_t)(APP_LOADED_ADDR >> 8);
     iap->bin_addr[3] = (uint8_t)(APP_LOADED_ADDR >> 16);
     iap->bin_addr[4] = (uint8_t)(APP_LOADED_ADDR >> 24);
 
-    iap_report_send (udev, iap->bin_addr, IAP_IN_PACKET);
+    iap_report_send(udev, iap->bin_addr, IAP_IN_PACKET);
 }
 
 /*!
-    \brief      write data to sectors of memory
-    \param[in]  data: data to be written
-    \param[in]  addr: sector address/code
-    \param[in]  len: length of data to be written (in bytes)
+    \brief      handle the IAP_UPLOAD request
+    \param[in]  udev: pointer to USB device instance
     \param[out] none
     \retval     none
 */
-static void iap_data_write(uint8_t *data, uint32_t addr, uint32_t len)
+static void iap_req_upload(usb_dev *udev)
 {
-    uint32_t index = 0U;
-    uint64_t temp = 0U;
+    usbd_iap_handler *iap = (usbd_iap_handler *)udev->class_data[USBD_IAP_INTERFACE];
+    uint32_t bin_flash_addr = APP_LOADED_ADDR;
+    uint16_t packet_valid_length = 0U;
+    uint16_t i = 0U;
 
-    /* check if the address is in protected area */
-    if (IS_PROTECTED_AREA(addr)) {
-        return;
+    iap->bin_addr[0] = IAP_DEVICE_ID;
+
+    /* get target flash address */
+    bin_flash_addr  = iap->report_buf[2];
+    bin_flash_addr |= (uint32_t)iap->report_buf[3] << 8;
+    bin_flash_addr |= (uint32_t)iap->report_buf[4] << 16;
+    bin_flash_addr |= (uint32_t)iap->report_buf[5] << 24;
+
+    /* get current packet valid length */
+    packet_valid_length = iap->report_buf[6];
+    packet_valid_length |= iap->report_buf[7]<< 8;
+
+    /* get target flash address content */
+    for(i= 0U; i< packet_valid_length; i++) {
+        iap->bin_addr[i+1] = REG8(bin_flash_addr+i);
     }
 
-#ifdef GD32L233
-    if (len & 0x03U) {/* not an aligned data */
-        for (index = len; index < ((len & 0xFFFCU) + 4U); index++) {
-            data[index] = 0xFFU;
-        }
+    iap_report_send(udev, iap->bin_addr, IAP_IN_PACKET);
+}
+
+/*!
+    \brief      handle the IAP_CHECK_RDP request
+    \param[in]  udev: pointer to USB device instance
+    \param[out] none
+    \retval     none
+*/
+static void iap_check_rdp(usb_dev *udev)
+{
+    uint8_t mode;
+    usbd_iap_handler *iap = (usbd_iap_handler *)udev->class_data[USBD_IAP_INTERFACE];
+
+    /* check whether the SPC bit of FMC module is normal state */
+    if(0xA5 != REG8(OPT_BYTE_ADDR)){
+        mode = IS_RDP_MODE;
+    } else {
+        mode = IS_NORMAL_MODE;
     }
 
-    /* data received are word multiple */
-    for (index = 0U; index < len; index += 4U) {
-        fmc_word_program(addr, *(uint32_t *)(data + index));
-        addr += 4U;
-    }
-#else
-    if (len & 0x07U) {/* not an aligned data */
-        for (index = len; index < ((len & 0xFFF8U) + 8U); index++) {
-            data[index] = 0xFFU;
-        }
-    }
+    iap->bin_addr[0] = IAP_DEVICE_ID;
+    iap->bin_addr[1] = mode;
 
-    /* data received are word multiple */
-    for (index = 0U; index < len; index += 8U) {
-        temp = (((uint64_t)*(uint16_t *)(data + index)) | 
-               (((uint64_t)*(uint16_t *)(data + index + 2)) << 16) | 
-               (((uint64_t)*(uint16_t *)(data + index + 4)) << 32) | 
-               (((uint64_t)*(uint16_t *)(data + index + 6)) << 48));
-
-        fmc_doubleword_program(addr, temp);
-        addr += 8U;
-    }
-#endif /* GD32L233 */
+    iap_report_send(udev, iap->bin_addr, IAP_IN_PACKET);
 }

@@ -2,11 +2,11 @@
     \file    audio_out_itf.h
     \brief   audio OUT (playback) interface header file
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -32,17 +32,17 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 OF SUCH DAMAGE.
 */
 
-#ifndef __AUDIO_OUT_ITF_H
-#define __AUDIO_OUT_ITF_H
+#ifndef AUDIO_OUT_ITF_H
+#define AUDIO_OUT_ITF_H
 
 #include "usbd_conf.h"
 
 typedef struct {
-    uint8_t  (*audio_init)        (uint32_t audio_freq, uint32_t volume);
-    uint8_t  (*audio_deinit)      (uint32_t options);
-    uint8_t  (*audio_cmd)         (uint8_t* pbuf, uint32_t size, uint8_t cmd);
+    uint8_t  (*audio_init)(uint32_t audio_freq, uint32_t volume);
+    uint8_t  (*audio_deinit)(uint32_t options);
+    uint8_t  (*audio_cmd)(uint8_t *pbuf, uint32_t size, uint8_t cmd);
 } audio_fops_struct;
 
 extern audio_fops_struct audio_out_fops;
 
-#endif  /* __AUDIO_OUT_ITF_H */
+#endif /* AUDIO_OUT_ITF_H */

@@ -2,11 +2,11 @@
     \file    printer_core.h
     \brief   the header file of USB printer device class core functions
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -32,8 +32,8 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 OF SUCH DAMAGE.
 */
 
-#ifndef __PRINTER_CORE_H
-#define __PRINTER_CORE_H
+#ifndef PRINTER_CORE_H
+#define PRINTER_CORE_H
 
 #include "usbd_enum.h"
 
@@ -44,30 +44,31 @@ OF SUCH DAMAGE.
 #define USB_SUBCLASS_PRINTER            0x01U
 
 /* printer device protocol code */
-#define PROTOCOL_UNIDIRECTIONAL_ITF     0x01U
-#define PROTOCOL_BI_DIRECTIONAL_ITF     0x02U
-#define PROTOCOL_1284_4_ITF             0x03U
-#define PROTOCOL_VENDOR                 0xFFU
+#define PROTOCOL_UNIDIRECTIONAL_ITF     0x01U            /*!< unidirectional interface */
+#define PROTOCOL_BI_DIRECTIONAL_ITF     0x02U            /*!< BI directional interface */
+#define PROTOCOL_1284_4_ITF             0x03U            /*!< 1284.4 interface */
+#define PROTOCOL_VENDOR                 0xFFU            /*!< vendor */
 
+/* device ID length */
 #define DEVICE_ID_LEN                   103U
 
+/* printer configuration descriptor length */
 #define USB_PRINTER_CONFIG_DESC_LEN     32U
 
 /* printer device specific-class request */
-#define GET_DEVICE_ID                   0x00U
-#define GET_PORT_STATUS                 0x01U
-#define SOFT_RESET                      0x02U
+#define GET_DEVICE_ID                   0x00U            /*!< get device id request */
+#define GET_PORT_STATUS                 0x01U            /*!< get port status request */
+#define SOFT_RESET                      0x02U            /*!< soft reset request */
 
 /* USB configuration descriptor structure */
-typedef struct
-{
-    usb_desc_config         config;
-    usb_desc_itf            printer_itf;
-    usb_desc_ep             printer_epin;
-    usb_desc_ep             printer_epout;
+typedef struct {
+    usb_desc_config         config;                      /*!< printer configuration descriptor */
+    usb_desc_itf            printer_itf;                 /*!< printer interface descriptor */
+    usb_desc_ep             printer_epin;                /*!< endpoint IN descriptor */
+    usb_desc_ep             printer_epout;               /*!< endpoint OUT descriptor */
 } usb_printer_desc_config_set;
 
 extern usb_desc printer_desc;
 extern usb_class printer_class;
 
-#endif /* __PRINTER_CORE_H */
+#endif /* PRINTER_CORE_H */

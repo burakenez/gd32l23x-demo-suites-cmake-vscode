@@ -2,11 +2,11 @@
     \file    standard_hid_core.h
     \brief   definitions for HID core
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -32,27 +32,26 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 OF SUCH DAMAGE.
 */
 
-#ifndef __STANDARD_HID_CORE_H
-#define __STANDARD_HID_CORE_H
+#ifndef STANDARD_HID_CORE_H
+#define STANDARD_HID_CORE_H
 
 #include "usbd_enum.h"
 #include "usb_hid.h"
 
-#define USB_HID_CONFIG_DESC_LEN          0x22U
-#define USB_HID_REPORT_DESC_LEN          0x2EU
+#define USB_HID_CONFIG_DESC_LEN          0x22U                           /*!< HID device configuration descriptor length */
+#define USB_HID_REPORT_DESC_LEN          0x2EU                           /*!< HID device report descriptor length */
 
 typedef struct
 {
-    __ALIGNED(2) uint32_t protocol;
-    __ALIGNED(2) uint32_t idle_state;
+    __ALIGNED(2) uint32_t protocol;                                      /*!< control request protocol */
+    __ALIGNED(2) uint32_t idle_state;                                    /*!< HID device idle state */
 
-    __ALIGNED(2) uint8_t data[HID_IN_PACKET];
+    __ALIGNED(2) uint8_t data[HID_IN_PACKET];                            /*!< data transfer buff */
 
-    __IO uint8_t prev_transfer_complete;
+    __IO uint8_t prev_transfer_complete;                                 /*!< previous transfer complete flag */
 } standard_hid_handler;
 
-typedef struct
-{
+typedef struct {
     void (*hid_itf_config)(void);
     void (*hid_itf_data_process)(usb_dev *udev);
 } hid_fop_handler;
@@ -66,4 +65,4 @@ uint8_t hid_itfop_register(usb_dev *udev, hid_fop_handler *hid_fop);
 /* send HID report */
 uint8_t hid_report_send(usb_dev *udev, uint8_t *report, uint16_t len);
 
-#endif /* __STANDARD_HID_CORE_H */
+#endif /* STANDARD_HID_CORE_H */

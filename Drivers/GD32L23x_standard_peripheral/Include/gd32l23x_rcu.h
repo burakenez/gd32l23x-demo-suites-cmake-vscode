@@ -2,11 +2,11 @@
     \file    gd32l23x_rcu.h
     \brief   definitions for the RCU
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -119,12 +119,16 @@ OF SUCH DAMAGE.
 #define RCU_APB2RST_SYSCFGRST       BIT(0)                    /*!< system configuration reset */
 #define RCU_APB2RST_CMPRST          BIT(1)                    /*!< comparator reset */
 #define RCU_APB2RST_ADCRST          BIT(9)                    /*!< ADC reset */
+#ifdef GD32L235
 #define RCU_APB2RST_TIMER0RST       BIT(10)                   /*!< TIMER0 reset */
+#endif/* GD32L235 */
 #define RCU_APB2RST_TIMER8RST       BIT(11)                   /*!< TIMER8 reset */
 #define RCU_APB2RST_SPI0RST         BIT(12)                   /*!< SPI0 reset */
 #define RCU_APB2RST_USART0RST       BIT(14)                   /*!< USART0 reset */
+#ifdef GD32L235
 #define RCU_APB2RST_TIMER14RST      BIT(16)                   /*!< TIMER14 reset */
 #define RCU_APB2RST_TIMER40RST      BIT(17)                   /*!< TIMER40 reset */
+#endif/* GD32L235 */
 
 /* RCU_APB1RST */
 #define RCU_APB1RST_TIMER1RST       BIT(0)                    /*!< TIMER1 timer reset */
@@ -173,12 +177,16 @@ OF SUCH DAMAGE.
 #define RCU_APB2EN_SYSCFGEN         BIT(0)                    /*!< system configuration clock enable */
 #define RCU_APB2EN_CMPEN            BIT(1)                    /*!< comparator clock enable */
 #define RCU_APB2EN_ADCEN            BIT(9)                    /*!< ADC interface clock enable */
+#ifdef GD32L235
 #define RCU_APB2EN_TIMER0EN         BIT(10)                   /*!< TIMER0 timer clock enable */
+#endif/* GD32L235 */
 #define RCU_APB2EN_TIMER8EN         BIT(11)                   /*!< TIMER8 timer clock enable */
 #define RCU_APB2EN_SPI0EN           BIT(12)                   /*!< SPI0 clock enable */
 #define RCU_APB2EN_USART0EN         BIT(14)                   /*!< USART0 clock enable */
-#define RCU_APB2EN_TIMER14EN        BIT(14)                   /*!< TIMER14 timer clock enable */
-#define RCU_APB2EN_TIMER40EN        BIT(40)                   /*!< TIMER40 timer clock enable */
+#ifdef GD32L235
+#define RCU_APB2EN_TIMER14EN        BIT(16)                   /*!< TIMER14 timer clock enable */
+#define RCU_APB2EN_TIMER40EN        BIT(17)                   /*!< TIMER40 timer clock enable */
+#endif/* GD32L235 */
 #define RCU_APB2EN_DBGMCUEN         BIT(22)                   /*!< DBGMCU clock enable */
 
 /* RCU_APB1EN */
@@ -342,12 +350,17 @@ typedef enum {
     RCU_SYSCFG  = RCU_REGIDX_BIT(APB2EN_REG_OFFSET, 0U),               /*!< SYSCFG clock */
     RCU_CMP     = RCU_REGIDX_BIT(APB2EN_REG_OFFSET, 1U),               /*!< CMP clock */
     RCU_ADC     = RCU_REGIDX_BIT(APB2EN_REG_OFFSET, 9U),               /*!< ADC clock */
+#ifdef GD32L235
     RCU_TIMER0  = RCU_REGIDX_BIT(APB2EN_REG_OFFSET, 10U),              /*!< TIMER0 clock */
+#endif/* GD32L235 */
+
     RCU_TIMER8  = RCU_REGIDX_BIT(APB2EN_REG_OFFSET, 11U),              /*!< TIMER8 clock */
     RCU_SPI0    = RCU_REGIDX_BIT(APB2EN_REG_OFFSET, 12U),              /*!< SPI0 clock */
     RCU_USART0  = RCU_REGIDX_BIT(APB2EN_REG_OFFSET, 14U),              /*!< USART0 clock */
+#ifdef GD32L235
     RCU_TIMER14 = RCU_REGIDX_BIT(APB2EN_REG_OFFSET, 16U),              /*!< TIMER14 clock */
     RCU_TIMER40 = RCU_REGIDX_BIT(APB2EN_REG_OFFSET, 17U),              /*!< TIMER40 clock */
+#endif/* GD32L235 */
     RCU_DBGMCU  = RCU_REGIDX_BIT(APB2EN_REG_OFFSET, 22U),              /*!< DBGMCU clock */
 
     /* APB1 peripherals */
@@ -410,12 +423,16 @@ typedef enum {
     RCU_SYSCFGRST  = RCU_REGIDX_BIT(APB2RST_REG_OFFSET, 0U),             /*!< SYSCFG reset */
     RCU_CMPRST     = RCU_REGIDX_BIT(APB2RST_REG_OFFSET, 1U),             /*!< CMP reset */
     RCU_ADCRST     = RCU_REGIDX_BIT(APB2RST_REG_OFFSET, 9U),             /*!< ADC reset */
+#ifdef GD32L235
     RCU_TIMER0RST  = RCU_REGIDX_BIT(APB2RST_REG_OFFSET, 10U),            /*!< TIMER0 reset */
+#endif/* GD32L235 */
     RCU_TIMER8RST  = RCU_REGIDX_BIT(APB2RST_REG_OFFSET, 11U),            /*!< TIMER8 reset */
     RCU_SPI0RST    = RCU_REGIDX_BIT(APB2RST_REG_OFFSET, 12U),            /*!< SPI0 reset */
     RCU_USART0RST  = RCU_REGIDX_BIT(APB2RST_REG_OFFSET, 14U),            /*!< USART0 reset */
+#ifdef GD32L235
     RCU_TIMER14RST  = RCU_REGIDX_BIT(APB2RST_REG_OFFSET, 16U),           /*!< TIMER14 reset */
     RCU_TIMER40RST  = RCU_REGIDX_BIT(APB2RST_REG_OFFSET, 17U),           /*!< TIMER40 reset */
+#endif/* GD32L235 */
 
     /* APB1 peripherals reset */
     RCU_TIMER1RST  = RCU_REGIDX_BIT(APB1RST_REG_OFFSET, 0U),             /*!< TIMER1 reset */

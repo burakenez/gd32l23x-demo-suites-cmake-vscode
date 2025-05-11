@@ -2,11 +2,11 @@
     \file    usbd_transc.c
     \brief   USBD transaction function
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -35,13 +35,7 @@ OF SUCH DAMAGE.
 #include "usbd_enum.h"
 #include "usbd_transc.h"
 
-/* local function prototypes ('static') */
-static inline void usb_stall_transc (usb_dev *udev);
-static inline void usb_ctl_data_in(usb_dev *udev);
-static inline void usb_ctl_status_in(usb_dev *udev);
-static inline void usb_ctl_data_out (usb_dev *udev);
-static inline void usb_ctl_status_out(usb_dev *udev);
-static inline void usb_0len_packet_send(usb_dev *udev);
+#include <stdio.h>
 
 /*!
     \brief      USB setup stage processing
@@ -58,13 +52,13 @@ void _usb_setup_transc(usb_dev *udev, uint8_t ep_num)
 
     uint16_t count = udev->drv_handler->ep_read((uint8_t *)(&udev->control.req), 0U, (uint8_t)EP_BUF_SNG);
 
-    if (count != USB_SETUP_PACKET_LEN) {
+    if(count != USB_SETUP_PACKET_LEN) {
         usb_stall_transc(udev);
 
         return;
     }
 
-    switch (udev->control.req.bmRequestType & USB_REQTYPE_MASK) {
+    switch(udev->control.req.bmRequestType & USB_REQTYPE_MASK) {
     /* standard device request */
     case USB_REQTYPE_STRD:
         reqstat = usbd_standard_request(udev, &udev->control.req);
@@ -84,12 +78,12 @@ void _usb_setup_transc(usb_dev *udev, uint8_t ep_num)
         break;
     }
 
-    if (REQ_SUPP == reqstat) {
-        if (0U == udev->control.req.wLength) {
+    if(REQ_SUPP == reqstat) {
+        if(0U == udev->control.req.wLength) {
             /* USB control transfer status in stage */
             usb_ctl_status_in(udev);
         } else {
-            if (udev->control.req.bmRequestType & 0x80U) {
+            if(udev->control.req.bmRequestType & 0x80U) {
                 usb_ctl_data_in(udev);
             } else {
                 /* USB control transfer data out stage */
@@ -110,22 +104,21 @@ void _usb_setup_transc(usb_dev *udev, uint8_t ep_num)
 */
 void _usb_out0_transc(usb_dev *udev, uint8_t ep_num)
 {
-    if (((uint8_t)USBD_CONFIGURED == udev->cur_status) && (NULL != udev->class_core->ctlx_out)) {
+    if(((uint8_t)USBD_CONFIGURED == udev->cur_status) && (NULL != udev->class_core->ctlx_out)) {
         /* device class handle */
         (void)udev->class_core->ctlx_out(udev);
     }
 
-    if (USBD_CTL_DATA_OUT == udev->control.ctl_state) {
+    if(USBD_CTL_DATA_OUT == udev->control.ctl_state) {
         /* enter the control transaction status IN stage */
         usb_ctl_status_in(udev);
-    } else if (USBD_CTL_STATUS_OUT == udev->control.ctl_state) {
+    } else if(USBD_CTL_STATUS_OUT == udev->control.ctl_state) {
         usb_transc_config(&udev->transc_out[ep_num], NULL, 0U, 0U);
 
         udev->control.ctl_state = USBD_CTL_IDLE;
     } else {
         /* no operation */
     }
-
 }
 
 /*!
@@ -139,21 +132,21 @@ void _usb_in0_transc(usb_dev *udev, uint8_t ep_num)
 {
     (void)ep_num;
 
-    if (udev->control.ctl_zlp) {
+    if(udev->control.ctl_zlp) {
         /* send 0 length packet */
         usb_0len_packet_send(udev);
 
         udev->control.ctl_zlp = 0U;
     }
 
-    if (((uint8_t)USBD_CONFIGURED == udev->cur_status) && (NULL != udev->class_core->ctlx_in)) {
+    if(((uint8_t)USBD_CONFIGURED == udev->cur_status) && (NULL != udev->class_core->ctlx_in)) {
         (void)udev->class_core->ctlx_in(udev);
     }
 
-    if (USBD_CTL_DATA_IN == udev->control.ctl_state) {
+    if(USBD_CTL_DATA_IN == udev->control.ctl_state) {
         /* USB control transfer status OUT stage */
         usb_ctl_status_out(udev);
-    } else if (USBD_CTL_STATUS_IN == udev->control.ctl_state) {
+    } else if(USBD_CTL_STATUS_IN == udev->control.ctl_state) {
         udev->control.ctl_state = USBD_CTL_IDLE;
     }
 

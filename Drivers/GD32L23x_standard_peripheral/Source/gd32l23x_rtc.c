@@ -2,11 +2,11 @@
     \file    gd32l23x_rtc.c
     \brief   RTC driver
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -1286,4 +1286,26 @@ ErrStatus rtc_smooth_calibration_config(uint32_t window, uint32_t plus, uint32_t
     RTC_WPK = RTC_LOCK_KEY;
 
     return error_status;
+}
+
+/*!
+    \brief      enable LXTAL stabilization reset
+    \param[in]  none
+    \param[out] none
+    \retval     none
+*/
+void rtc_lxtal_stab_reset_enable(void)
+{
+    RTC_CTL |= RTC_CTL_LXTALSTBRST;
+}
+
+/*!
+    \brief      disable LXTAL stabilization reset
+    \param[in]  none
+    \param[out] none
+    \retval     none
+*/
+void rtc_lxtal_stab_reset_disable(void)
+{
+    RTC_CTL &= ~RTC_CTL_LXTALSTBRST;
 }

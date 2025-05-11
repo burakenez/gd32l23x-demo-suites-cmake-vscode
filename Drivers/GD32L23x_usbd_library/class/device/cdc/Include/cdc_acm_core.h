@@ -2,11 +2,11 @@
     \file    cdc_acm_core.h
     \brief   the header file of CDC ACM driver
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -32,8 +32,8 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 OF SUCH DAMAGE.
 */
 
-#ifndef __CDC_ACM_CORE_H
-#define __CDC_ACM_CORE_H
+#ifndef CDC_ACM_CORE_H
+#define CDC_ACM_CORE_H
 
 #include "usbd_enum.h"
 
@@ -44,35 +44,35 @@ OF SUCH DAMAGE.
 #define USB_CLASS_CDC                           0x02U
 
 /* CDC subclass code */
-#define USB_CDC_SUBCLASS_DLCM                   0x01U
-#define USB_CDC_SUBCLASS_ACM                    0x02U
+#define USB_CDC_SUBCLASS_DLCM                   0x01U              /*!< CDC DLCM subclass */
+#define USB_CDC_SUBCLASS_ACM                    0x02U              /*!< CDC ACM subclass */
 
 /* communications interface class control protocol codes */
-#define USB_CDC_PROTOCOL_NONE                   0x00U
-#define USB_CDC_PROTOCOL_AT                     0x01U
+#define USB_CDC_PROTOCOL_NONE                   0x00U              /*!< CDC none protocol */
+#define USB_CDC_PROTOCOL_AT                     0x01U              /*!< CDC AT protocol */
 
 /* data interface class code */
 #define USB_CLASS_DATA                          0x0AU
 
-#define USB_DESCTYPE_CDC_ACM                    0x21U
-#define USB_DESCTYPE_CS_INTERFACE               0x24U
+#define USB_DESCTYPE_CDC_ACM                    0x21U              /*!< CDC descriptor type */
+#define USB_DESCTYPE_CS_INTERFACE               0x24U              /*!< CDC interface descriptor type */
 
-#define USB_CDC_ACM_CONFIG_DESC_SIZE            0x43U
+#define USB_CDC_ACM_CONFIG_DESC_SIZE            0x43U              /*!< CDC configuration descriptor size */
 
 /* class-specific notification codes for PSTN subclasses */
 #define USB_CDC_NOTIFY_SERIAL_STATE             0x20U
 
 /* class-specific request codes */
-#define SEND_ENCAPSULATED_COMMAND               0x00U
-#define GET_ENCAPSULATED_RESPONSE               0x01U
-#define SET_COMM_FEATURE                        0x02U
-#define GET_COMM_FEATURE                        0x03U
-#define CLEAR_COMM_FEATURE                      0x04U
-#define SET_LINE_CODING                         0x20U
-#define GET_LINE_CODING                         0x21U
-#define SET_CONTROL_LINE_STATE                  0x22U
-#define SEND_BREAK                              0x23U
-#define NO_CMD                                  0xFFU
+#define SEND_ENCAPSULATED_COMMAND               0x00U               /*!< send encapsulated command request */
+#define GET_ENCAPSULATED_RESPONSE               0x01U               /*!< get encapsulated response request */
+#define SET_COMM_FEATURE                        0x02U               /*!< set command feature request */
+#define GET_COMM_FEATURE                        0x03U               /*!< get command feature request */
+#define CLEAR_COMM_FEATURE                      0x04U               /*!< clear command feature request */
+#define SET_LINE_CODING                         0x20U               /*!< set line coding request */
+#define GET_LINE_CODING                         0x21U               /*!< get line coding request */
+#define SET_CONTROL_LINE_STATE                  0x22U               /*!< set control line state request */
+#define SEND_BREAK                              0x23U               /*!< send break request */
+#define NO_CMD                                  0xFFU               /*!< no command request */
 
 #pragma pack(1)
 
@@ -127,16 +127,16 @@ typedef struct {
 
 /* configuration descriptor structure */
 typedef struct {
-    usb_desc_config                  config;
-    usb_desc_itf                     cmd_itf;
-    usb_desc_header_func             cdc_header;
-    usb_desc_call_managment_func     cdc_call_managment;
-    usb_desc_acm_func                cdc_acm;
-    usb_desc_union_func              cdc_union;
-    usb_desc_ep                      cdc_cmd_endpoint;
-    usb_desc_itf                     cdc_data_interface;
-    usb_desc_ep                      cdc_out_endpoint;
-    usb_desc_ep                      cdc_in_endpoint;
+    usb_desc_config                  config;                     /*!< configure descriptor */
+    usb_desc_itf                     cmd_itf;                    /*!< CDC cmd interface descriptor */
+    usb_desc_header_func             cdc_header;                 /*!< CDC header func descriptor */
+    usb_desc_call_managment_func     cdc_call_managment;         /*!< CDC call managment descriptor */
+    usb_desc_acm_func                cdc_acm;                    /*!< CDC acm descriptor */
+    usb_desc_union_func              cdc_union;                  /*!< CDC union func descriptor */
+    usb_desc_ep                      cdc_cmd_endpoint;           /*!< CDC cmd endpoint descriptor */
+    usb_desc_itf                     cdc_data_interface;         /*!< CDC data interface descriptor */
+    usb_desc_ep                      cdc_out_endpoint;           /*!< CDC OUT endpoint descriptor */
+    usb_desc_ep                      cdc_in_endpoint;            /*!< CDC IN endpoint descriptor */
 } usb_cdc_desc_config_set;
 
 typedef struct {
@@ -160,4 +160,4 @@ void cdc_acm_data_send(usb_dev *udev);
 /* check CDC ACM is ready for data transfer */
 uint8_t cdc_acm_check_ready(usb_dev *udev);
 
-#endif  /* __CDC_ACM_CORE_H */
+#endif /* CDC_ACM_CORE_H */

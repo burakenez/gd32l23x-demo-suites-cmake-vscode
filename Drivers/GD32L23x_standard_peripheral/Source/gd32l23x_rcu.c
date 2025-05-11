@@ -2,11 +2,11 @@
     \file    gd32l23x_rcu.c
     \brief   RCU driver
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -88,7 +88,7 @@ void rcu_deinit(void)
       \arg        RCU_CMP: CMP clock
       \arg        RCU_SYSCFG: SYSCFG clock
       \arg        RCU_ADC: ADC clock
-      \arg        RCU_TIMERx (x = 0,1,2,5,6,8,11,14,40): TIMER clock
+      \arg        RCU_TIMERx (x = 0,1,2,5,6,8,11,14,40, among 0,14 and 40 only for GD32L235xx series): TIMER clock
       \arg        RCU_LPTIMER (only for GD32L233xx series): LPTIMER clock
       \arg        RCU_LPTIMERx (x = 0,1,only for GD32L235xx series): LPTIMER clock
       \arg        RCU_SPIx (x = 0,1): SPI clock
@@ -128,7 +128,7 @@ void rcu_periph_clock_enable(rcu_periph_enum periph)
       \arg        RCU_CMP: CMP clock
       \arg        RCU_SYSCFG: SYSCFG clock
       \arg        RCU_ADC: ADC clock
-      \arg        RCU_TIMERx (x=0,1,2,5,6,8,11,14,40): TIMER clock
+      \arg        RCU_TIMERx (x=0,1,2,5,6,8,11,14,40, among 0,14 and 40 only for GD32L235xx series): TIMER clock
       \arg        RCU_LPTIMER (only for GD32L233xx series): LPTIMER clock
       \arg        RCU_LPTIMERx (x=0,1,only for GD32L235xx series): LPTIMER clock
       \arg        RCU_SPIx (x=0,1): SPI clock
@@ -196,7 +196,7 @@ void rcu_periph_clock_sleep_disable(rcu_periph_sleep_enum periph)
       \arg        RCU_CMPRST: reset CMP
       \arg        RCU_SYSCFGRST: reset SYSCFG
       \arg        RCU_ADCRST: reset ADC
-      \arg        RCU_TIMERxRST (x=0,1,2,5,6,8,11,14,40): reset TIMER
+      \arg        RCU_TIMERxRST (x=0,1,2,5,6,8,11,14,40,among 0,14 and 40 only for GD32L235xx series): reset TIMER
       \arg        RCU_SPIxRST (x=0,1): reset SPI
       \arg        RCU_USARTxRST (x=0,1): reset USART
       \arg        RCU_LPTIMERRST (only for GD32L233xx series): reset LPTIMER
@@ -231,7 +231,7 @@ void rcu_periph_reset_enable(rcu_periph_reset_enum periph_reset)
       \arg        RCU_CMPRST: reset CMP
       \arg        RCU_SYSCFGRST: reset SYSCFG
       \arg        RCU_ADCRST: reset ADC
-      \arg        RCU_TIMERxRST (x=0,1,2,5,6,8,11,14,40): reset TIMER
+      \arg        RCU_TIMERxRST (x=0,1,2,5,6,8,11,14,40,among 0,14 and 40 only for GD32L235xx series): reset TIMER
       \arg        RCU_SPIxRST (x=0,1): reset SPI
       \arg        RCU_USARTxRST (x=0,1): reset USART
       \arg        RCU_LPTIMERRST (only for GD32L233xx series): reset LPTIMER

@@ -2,11 +2,11 @@
     \file    gd32l23x_lpuart.c
     \brief   LPUART driver
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -97,7 +97,7 @@ void lpuart_baudrate_set(uint32_t lpuart_periph, uint32_t baudval)
         break;
     }
     
-    lpudiv = (((lpuclk+baudval/2U)/baudval) << 8U) & 0x000fffffU;
+    lpudiv = (lpuclk / 100U * 256U + baudval / 200U) / (baudval / 100U);
     
     LPUART_BAUD(lpuart_periph) = (LPUART_BAUD_BRR & lpudiv);
 }

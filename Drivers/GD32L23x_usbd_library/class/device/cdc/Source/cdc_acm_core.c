@@ -2,11 +2,11 @@
     \file    cdc_acm_core.c
     \brief   CDC ACM driver
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -35,13 +35,14 @@ OF SUCH DAMAGE.
 #include "usbd_transc.h"
 #include "cdc_acm_core.h"
 
+#include <stdio.h>
+
 #define USBD_VID                          0x28E9U
 #define USBD_PID                          0x018AU
 
 /* note:it should use the C99 standard when compiling the below codes */
 /* USB standard device descriptor */
-__ALIGNED(2) usb_desc_dev cdc_dev_desc =
-{
+__ALIGNED(2) usb_desc_dev cdc_dev_desc = {
     .header = 
      {
          .bLength          = USB_DEV_DESC_LEN, 
@@ -62,8 +63,7 @@ __ALIGNED(2) usb_desc_dev cdc_dev_desc =
 };
 
 /* USB device configuration descriptor */
-__ALIGNED(2) usb_cdc_desc_config_set cdc_config_desc = 
-{
+__ALIGNED(2) usb_cdc_desc_config_set cdc_config_desc = {
     .config = 
     {
         .header = 
@@ -198,51 +198,46 @@ __ALIGNED(2) usb_cdc_desc_config_set cdc_config_desc =
 };
 
 /* USB language ID descriptor */
-__ALIGNED(2) static usb_desc_LANGID usbd_language_id_desc = 
-{
+__ALIGNED(2) static usb_desc_LANGID usbd_language_id_desc = {
     .header = 
      {
          .bLength         = sizeof(usb_desc_LANGID), 
-         .bDescriptorType = USB_DESCTYPE_STR,
+         .bDescriptorType = USB_DESCTYPE_STR
      },
     .wLANGID              = ENG_LANGID
 };
 
 /* USB manufacture string */
-__ALIGNED(2) static usb_desc_str manufacturer_string = 
-{
+__ALIGNED(2) static usb_desc_str manufacturer_string = {
     .header = 
      {
          .bLength         = USB_STRING_LEN(10U), 
-         .bDescriptorType = USB_DESCTYPE_STR,
+         .bDescriptorType = USB_DESCTYPE_STR
      },
     .unicode_string = {'G', 'i', 'g', 'a', 'D', 'e', 'v', 'i', 'c', 'e'}
 };
 
 /* USB product string */
-__ALIGNED(2) static usb_desc_str product_string = 
-{
+__ALIGNED(2) static usb_desc_str product_string = {
     .header = 
      {
          .bLength         = USB_STRING_LEN(12U), 
-         .bDescriptorType = USB_DESCTYPE_STR,
+         .bDescriptorType = USB_DESCTYPE_STR
      },
     .unicode_string = {'G', 'D', '3', '2', '-', 'C', 'D', 'C', '_', 'A', 'C', 'M'}
 };
 
 /* USB serial string */
-__ALIGNED(2) static usb_desc_str serial_string = 
-{
+__ALIGNED(2) static usb_desc_str serial_string = {
     .header = 
      {
          .bLength         = USB_STRING_LEN(12U), 
-         .bDescriptorType = USB_DESCTYPE_STR,
+         .bDescriptorType = USB_DESCTYPE_STR
      }
 };
 
 /* USB string descriptor set */
-uint8_t* usbd_cdc_strings[] = 
-{
+uint8_t* usbd_cdc_strings[] = {
     [STR_IDX_LANGID]  = (uint8_t *)&usbd_language_id_desc,
     [STR_IDX_MFC]     = (uint8_t *)&manufacturer_string,
     [STR_IDX_PRODUCT] = (uint8_t *)&product_string,
@@ -256,12 +251,12 @@ usb_desc cdc_desc = {
 };
 
 /* local function prototypes ('static') */
-static uint8_t cdc_acm_init         (usb_dev *udev, uint8_t config_index);
-static uint8_t cdc_acm_deinit       (usb_dev *udev, uint8_t config_index);
-static uint8_t cdc_acm_req_handler  (usb_dev *udev, usb_req *req);
-static uint8_t cdc_acm_ctlx_out     (usb_dev *udev);
-static void cdc_acm_data_in         (usb_dev *udev, uint8_t ep_num);
-static void cdc_acm_data_out        (usb_dev *udev, uint8_t ep_num);
+static uint8_t cdc_acm_init(usb_dev *udev, uint8_t config_index);
+static uint8_t cdc_acm_deinit(usb_dev *udev, uint8_t config_index);
+static uint8_t cdc_acm_req_handler(usb_dev *udev, usb_req *req);
+static uint8_t cdc_acm_ctlx_out(usb_dev *udev);
+static void cdc_acm_data_in(usb_dev *udev, uint8_t ep_num);
+static void cdc_acm_data_out(usb_dev *udev, uint8_t ep_num);
 
 usb_class cdc_class = {
     .req_cmd       = NO_CMD,
@@ -296,12 +291,12 @@ void cdc_acm_data_receive(usb_dev *udev)
     \param[out] none
     \retval     none
 */
-void cdc_acm_data_send (usb_dev *udev)
+void cdc_acm_data_send(usb_dev *udev)
 {
     usb_cdc_handler *cdc = (usb_cdc_handler *)udev->class_data[CDC_COM_INTERFACE];
     uint32_t data_len = cdc->receive_length;
 
-    if ((0U != data_len) && (1U == cdc->packet_sent)) {
+    if((0U != data_len) && (1U == cdc->packet_sent)) {
         cdc->packet_sent = 0U;
         usbd_ep_send(udev, CDC_IN_EP, (uint8_t*)(cdc->data), (uint16_t)data_len);
         cdc->receive_length = 0U;
@@ -316,10 +311,10 @@ void cdc_acm_data_send (usb_dev *udev)
 */
 uint8_t cdc_acm_check_ready(usb_dev *udev)
 {
-    if (udev->class_data[CDC_COM_INTERFACE] != NULL) {
+    if(NULL != udev->class_data[CDC_COM_INTERFACE]) {
         usb_cdc_handler *cdc = (usb_cdc_handler *)udev->class_data[CDC_COM_INTERFACE];
 
-        if ((1U == cdc->packet_receive) && (1U == cdc->pre_packet_send)) {
+        if((1U == cdc->packet_receive) && (1U == cdc->pre_packet_send)) {
             return 0U;
         }
     }
@@ -334,7 +329,7 @@ uint8_t cdc_acm_check_ready(usb_dev *udev)
     \param[out] none
     \retval     USB device operation status
 */
-static uint8_t cdc_acm_init (usb_dev *udev, uint8_t config_index)
+static uint8_t cdc_acm_init(usb_dev *udev, uint8_t config_index)
 {
     static usb_cdc_handler cdc_handler;
 
@@ -351,7 +346,7 @@ static uint8_t cdc_acm_init (usb_dev *udev, uint8_t config_index)
     /* initialize CDC handler structure */
     cdc_handler.packet_receive = 0U;
     cdc_handler.packet_sent = 1U;
-    cdc_handler.pre_packet_send = 1U; 
+    cdc_handler.pre_packet_send = 1U;
     cdc_handler.receive_length = 0U;
 
     cdc_handler.line_coding = (acm_line){
@@ -373,7 +368,7 @@ static uint8_t cdc_acm_init (usb_dev *udev, uint8_t config_index)
     \param[out] none
     \retval     USB device operation status
 */
-static uint8_t cdc_acm_deinit (usb_dev *udev, uint8_t config_index)
+static uint8_t cdc_acm_deinit(usb_dev *udev, uint8_t config_index)
 {
     /* deinitialize the data endpoints */
     usbd_ep_deinit(udev, CDC_IN_EP);
@@ -391,11 +386,11 @@ static uint8_t cdc_acm_deinit (usb_dev *udev, uint8_t config_index)
     \param[out] none
     \retval     USB device operation status
 */
-static uint8_t cdc_acm_ctlx_out (usb_dev *udev)
+static uint8_t cdc_acm_ctlx_out(usb_dev *udev)
 {
     usb_cdc_handler *cdc = (usb_cdc_handler *)udev->class_data[CDC_COM_INTERFACE];
 
-    if (NO_CMD != udev->class_core->req_cmd) {
+    if(NO_CMD != udev->class_core->req_cmd) {
         cdc->packet_receive = 1U;
         cdc->pre_packet_send = 1U;
 
@@ -406,18 +401,18 @@ static uint8_t cdc_acm_ctlx_out (usb_dev *udev)
 }
 
 /*!
-    \brief      handle CDC ACM data in transaction
+    \brief      handle CDC ACM data IN transaction
     \param[in]  udev: pointer to USB device instance
     \param[in]  ep_num: endpoint number
     \param[out] none
     \retval     none
 */
-static void cdc_acm_data_in (usb_dev *udev, uint8_t ep_num)
+static void cdc_acm_data_in(usb_dev *udev, uint8_t ep_num)
 {
     usb_transc *transc = &udev->transc_in[ep_num];
     usb_cdc_handler *cdc = (usb_cdc_handler *)udev->class_data[CDC_COM_INTERFACE];
 
-    if (transc->xfer_count == transc->max_len) {
+    if(transc->xfer_count == transc->max_len) {
         usbd_ep_send(udev, EP_ID(ep_num), NULL, 0U);
     } else {
         cdc->packet_sent = 1U;
@@ -426,13 +421,13 @@ static void cdc_acm_data_in (usb_dev *udev, uint8_t ep_num)
 }
 
 /*!
-    \brief      handle CDC ACM data out transaction
+    \brief      handle CDC ACM data OUT transaction
     \param[in]  udev: pointer to USB device instance
     \param[in]  ep_num: endpoint number
     \param[out] none
     \retval     none
 */
-static void cdc_acm_data_out (usb_dev *udev, uint8_t ep_num)
+static void cdc_acm_data_out(usb_dev *udev, uint8_t ep_num)
 {
     usb_cdc_handler *cdc = (usb_cdc_handler *)udev->class_data[CDC_COM_INTERFACE];
 
@@ -448,14 +443,14 @@ static void cdc_acm_data_out (usb_dev *udev, uint8_t ep_num)
     \param[out] none
     \retval     USB device operation status
 */
-static uint8_t cdc_acm_req_handler (usb_dev *udev, usb_req *req)
+static uint8_t cdc_acm_req_handler(usb_dev *udev, usb_req *req)
 {
     uint8_t status = REQ_NOTSUPP, noti_buf[10] = {0U};
     usb_cdc_handler *cdc = (usb_cdc_handler *)udev->class_data[CDC_COM_INTERFACE];
 
     acm_notification *notif = (void *)noti_buf;
 
-    switch (req->bRequest) {
+    switch(req->bRequest) {
     case SEND_ENCAPSULATED_COMMAND:
         break;
 
@@ -475,13 +470,13 @@ static uint8_t cdc_acm_req_handler (usb_dev *udev, usb_req *req)
         /* set the value of the current command to be processed */
         udev->class_core->req_cmd = req->bRequest;
 
-        usb_transc_config(&udev->transc_out[0U], (uint8_t *)&cdc->line_coding, req->wLength, 0U);
+        usb_transc_config(&udev->transc_out[0], (uint8_t *)&cdc->line_coding, req->wLength, 0U);
 
         status = REQ_SUPP;
         break;
 
     case GET_LINE_CODING:
-        usb_transc_config(&udev->transc_in[0U], (uint8_t *)&cdc->line_coding, 7U, 0U);
+        usb_transc_config(&udev->transc_in[0], (uint8_t *)&cdc->line_coding, 7U, 0U);
 
         status = REQ_SUPP;
         break;

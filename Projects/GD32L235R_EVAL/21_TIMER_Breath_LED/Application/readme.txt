@@ -2,11 +2,11 @@
     \file    readme.txt
     \brief   description of TIMER Breath LED demo
 
-    \version 2024-03-25, V2.2.0, demo for GD32L23x
+    \version 2025-02-18, V2.4.0, demo for GD32L23x
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification, 
 are permitted provided that the following conditions are met:

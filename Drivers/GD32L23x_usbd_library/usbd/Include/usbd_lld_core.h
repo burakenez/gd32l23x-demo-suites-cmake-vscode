@@ -2,11 +2,11 @@
     \file    usbd_lld_core.h
     \brief   USB device low level driver core
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -32,23 +32,21 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 OF SUCH DAMAGE.
 */
 
-#ifndef __USBD_LLD_CORE_H
-#define __USBD_LLD_CORE_H
+#ifndef USBD_LLD_CORE_H
+#define USBD_LLD_CORE_H
 
 #include "usbd_lld_regs.h"
 #include "usbd_core.h"
 
 /* double buffer endpoint direction enumeration */
-enum dbuf_ep_dir
-{
+enum dbuf_ep_dir {
     DBUF_EP_IN,               /*!< double buffer in direction */
     DBUF_EP_OUT,              /*!< double buffer out direction */
-    DBUF_EP_ERR,              /*!< double buffer error direction */
+    DBUF_EP_ERR               /*!< double buffer error direction */
 };
 
 /* USBD endpoint ram structure */
-typedef struct 
-{
+typedef struct {
     __IO uint32_t tx_addr;    /*!< transmission address */
     __IO uint32_t tx_count;   /*!< transmission count */
     __IO uint32_t rx_addr;    /*!< reception address */
@@ -58,10 +56,9 @@ typedef struct
 extern struct _usb_handler usbd_drv_handler;
 
 /* USB core driver structure */
-typedef struct 
-{
-    usb_basic  basic;
-    usb_dev    *dev;
+typedef struct {
+    usb_basic  basic;         /*!< USB device basic parameters */
+    usb_dev   *dev;           /*!< USB core driver parameters*/
 } usb_core_drv;
 
 extern usb_core_drv usbd_core;
@@ -70,4 +67,4 @@ extern usb_core_drv usbd_core;
 /* free buffer used from application by toggling the SW_BUF byte */
 void user_buffer_free(uint8_t ep_num, uint8_t dir);
 
-#endif /* __USBD_LLD_CORE_H */
+#endif /* USBD_LLD_CORE_H */

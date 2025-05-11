@@ -2,11 +2,11 @@
     \file    audio_core.c
     \brief   USB audio device class core functions
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -46,16 +46,16 @@ OF SUCH DAMAGE.
 #define VOL_0dB                      70U   /* 0dB is in the middle of VOL_MIN and VOL_MAX */
 
 /* local function prototypes ('static') */
-static uint8_t audio_sof         (usb_dev *udev);
-static uint8_t audio_init        (usb_dev *udev, uint8_t config_index);
-static uint8_t audio_deinit      (usb_dev *udev, uint8_t config_index);
-static uint8_t audio_req_handler (usb_dev *udev, usb_req *req);
-static uint8_t audio_ctlx_out    (usb_dev *udev);
-static void    audio_data_out    (usb_dev *udev, uint8_t ep_num);
-static void    audio_set_itf     (usb_dev *udev, usb_req *req);
+static uint8_t audio_sof(usb_dev *udev);
+static uint8_t audio_init(usb_dev *udev, uint8_t config_index);
+static uint8_t audio_deinit(usb_dev *udev, uint8_t config_index);
+static uint8_t audio_req_handler(usb_dev *udev, usb_req *req);
+static uint8_t audio_ctlx_out(usb_dev *udev);
+static void    audio_data_out(usb_dev *udev, uint8_t ep_num);
 
-usb_class audio_class =
-{
+static void    audio_set_itf(usb_dev *udev, usb_req *req);
+
+usb_class audio_class = {
     .init        = audio_init,
     .deinit      = audio_deinit,
     .req_process = audio_req_handler,
@@ -63,15 +63,13 @@ usb_class audio_class =
     .data_out    = audio_data_out
 };
 
-usbd_int_cb_struct usb_inthandler = 
-{
-    audio_sof,
+usbd_int_cb_struct usb_inthandler = {
+    audio_sof
 };
 
 /* note:it should use the c99 standard when compiling the below codes */
 /* USB standard device descriptor */
-__ALIGNED(2) usb_desc_dev audio_dev_desc =
-{
+__ALIGNED(2) usb_desc_dev audio_dev_desc = {
     .header = 
      {
          .bLength          = USB_DEV_DESC_LEN, 
@@ -92,8 +90,7 @@ __ALIGNED(2) usb_desc_dev audio_dev_desc =
 };
 
 /* USB device configuration descriptor */
-__ALIGNED(2) usb_desc_config_set audio_config_set = 
-{
+__ALIGNED(2) usb_desc_config_set audio_config_set = {
     .config = 
     {
         .header = 
@@ -280,8 +277,7 @@ __ALIGNED(2) usb_desc_config_set audio_config_set =
 };
 
 /* USB language ID descriptor */
-__ALIGNED(2) static usb_desc_LANGID usbd_language_id_desc = 
-{
+__ALIGNED(2) static usb_desc_LANGID usbd_language_id_desc = {
     .header = 
      {
          .bLength         = sizeof(usb_desc_LANGID), 
@@ -292,40 +288,36 @@ __ALIGNED(2) static usb_desc_LANGID usbd_language_id_desc =
 };
 
 /* USB manufacture string */
-__ALIGNED(2) static usb_desc_str manufacturer_string = 
-{
+__ALIGNED(2) static usb_desc_str manufacturer_string = {
     .header = 
      {
          .bLength         = USB_STRING_LEN(10U), 
-         .bDescriptorType = USB_DESCTYPE_STR,
+         .bDescriptorType = USB_DESCTYPE_STR
      },
     .unicode_string = {'G', 'i', 'g', 'a', 'D', 'e', 'v', 'i', 'c', 'e'}
 };
 
 /* USB product string */
-__ALIGNED(2) static usb_desc_str product_string = 
-{
+__ALIGNED(2) static usb_desc_str product_string = {
     .header = 
      {
          .bLength         = USB_STRING_LEN(14U), 
-         .bDescriptorType = USB_DESCTYPE_STR,
+         .bDescriptorType = USB_DESCTYPE_STR
      },
     .unicode_string = {'G', 'D', '3', '2', '-', 'U', 'S', 'B', '_', 'A', 'u', 'd', 'i', 'o'}
 };
 
 /* USB serial string */
-__ALIGNED(2) static usb_desc_str serial_string = 
-{
+__ALIGNED(2) static usb_desc_str serial_string = {
     .header = 
      {
          .bLength         = USB_STRING_LEN(12U), 
-         .bDescriptorType = USB_DESCTYPE_STR,
+         .bDescriptorType = USB_DESCTYPE_STR
      }
 };
 
 /* USB string descriptor */
-static uint8_t* usbd_audio_strings[] = 
-{
+static uint8_t* usbd_audio_strings[] = {
     [STR_IDX_LANGID]  = (uint8_t *)&usbd_language_id_desc,
     [STR_IDX_MFC]     = (uint8_t *)&manufacturer_string,
     [STR_IDX_PRODUCT] = (uint8_t *)&product_string,
@@ -351,14 +343,14 @@ static uint8_t audio_init(usb_dev *udev, uint8_t config_index)
 
     static usbd_audio_handler audio_handler;
 
-    memset((void *)&audio_handler, 0, sizeof(usbd_audio_handler));
+    memset((void *)&audio_handler, 0U, sizeof(usbd_audio_handler));
 
     usb_desc_ep ep = {
         .header           = std_ep.header,
         .bEndpointAddress = std_ep.bEndpointAddress,
         .bmAttributes     = std_ep.bmAttributes,
         .wMaxPacketSize   = std_ep.wMaxPacketSize,
-        .bInterval        = std_ep.bInterval 
+        .bInterval        = std_ep.bInterval
     };
 
     /* initialize RX endpoint */
@@ -370,14 +362,14 @@ static uint8_t audio_init(usb_dev *udev, uint8_t config_index)
     audio_handler.isoc_out_wrptr = audio_handler.isoc_out_buff;
 
     /* initialize the audio output hardware layer */
-    if (USBD_OK != audio_out_fops.audio_init(USBD_SPEAKER_FREQ, DEFAULT_VOLUME)) {
+    if(USBD_OK != audio_out_fops.audio_init(USBD_SPEAKER_FREQ, DEFAULT_VOLUME)) {
         return USBD_FAIL;
     }
 
     udev->ep_transc[AD_OUT_EP][TRANSC_OUT] = audio_class.data_out;
 
     /* prepare out endpoint to receive audio data */
-    usbd_ep_recev (udev, AD_OUT_EP, (uint8_t*)audio_handler.usb_rx_buffer, SPEAKER_OUT_MAX_PACKET);
+    usbd_ep_recev(udev, AD_OUT_EP, (uint8_t *)audio_handler.usb_rx_buffer, SPEAKER_OUT_MAX_PACKET);
 
     udev->class_data[USBD_AD_INTERFACE] = (void *)&audio_handler;
 
@@ -397,7 +389,7 @@ static uint8_t audio_deinit(usb_dev *udev, uint8_t config_index)
     usbd_ep_deinit(udev, AD_OUT_EP);
 
     /* deinitialize the audio output hardware layer */
-    if (USBD_OK != audio_out_fops.audio_deinit(0U)) {
+    if(USBD_OK != audio_out_fops.audio_deinit(0U)) {
         return USBD_FAIL;
     }
 
@@ -417,7 +409,7 @@ static uint8_t audio_req_handler(usb_dev *udev, usb_req *req)
 
     usbd_audio_handler *audio = (usbd_audio_handler *)udev->class_data[USBD_AD_INTERFACE];
 
-    switch (req->bRequest) {
+    switch(req->bRequest) {
     case USB_SET_INTERFACE:
         audio_set_itf(udev, req);
         break;
@@ -429,7 +421,7 @@ static uint8_t audio_req_handler(usb_dev *udev, usb_req *req)
         break;
 
     case AD_REQ_SET_CUR:
-        if (req->wLength) {
+        if(req->wLength) {
             usb_transc_config(&udev->transc_out[0], audio->audioctl, req->wLength, 0U);
 
             udev->class_core->req_cmd = AD_REQ_SET_CUR;
@@ -470,7 +462,7 @@ static uint8_t audio_req_handler(usb_dev *udev, usb_req *req)
 }
 
 /*!
-    \brief      handle the audio set interface requests
+    \brief      handle the AUDIO set interface requests
     \param[in]  udev: pointer to USB device instance
     \param[in]  req: device class-specific request
     \param[out] none
@@ -480,19 +472,19 @@ static void audio_set_itf(usb_dev *udev, usb_req *req)
 {
     usbd_audio_handler *audio = (usbd_audio_handler *)udev->class_data[USBD_AD_INTERFACE];
 
-    if (0xFF != req->wValue){
-        if (0 != req->wValue){
+    if(0xFFU != req->wValue) {
+        if(0U != req->wValue) {
             /* deinit audio handler */
-            memset((void *)audio, 0, sizeof(usbd_audio_handler));
+            memset((void *)audio, 0U, sizeof(usbd_audio_handler));
 
-            audio->play_flag = 0;
+            audio->play_flag = 0U;
             audio->isoc_out_rdptr = audio->isoc_out_buff;
             audio->isoc_out_wrptr = audio->isoc_out_buff;
         } else {
             /* stop audio output */
-            audio_out_fops.audio_cmd(audio->isoc_out_rdptr, SPEAKER_OUT_PACKET / 2, AD_CMD_STOP);
+            audio_out_fops.audio_cmd(audio->isoc_out_rdptr, SPEAKER_OUT_PACKET / 2U, AD_CMD_STOP);
 
-            audio->play_flag = 0;
+            audio->play_flag = 0U;
             audio->isoc_out_rdptr = audio->isoc_out_buff;
             audio->isoc_out_wrptr = audio->isoc_out_buff;
         }
@@ -500,7 +492,7 @@ static void audio_set_itf(usb_dev *udev, usb_req *req)
 }
 
 /*!
-    \brief      handle the audio out data stage
+    \brief      handles the audio OUT data stage
     \param[in]  udev: pointer to USB device instance
     \param[in]  ep_num: endpoint number
     \param[out] none
@@ -510,31 +502,31 @@ static void audio_data_out(usb_dev *udev, uint8_t ep_num)
 {
     usbd_audio_handler *audio = (usbd_audio_handler *)udev->class_data[USBD_AD_INTERFACE];
 
-    if (AD_OUT_EP == ep_num) {
+    if(AD_OUT_EP == ep_num) {
         uint16_t usb_rx_length, tail_len;
 
         /* get receive length */
         usb_rx_length = udev->transc_out[ep_num].xfer_count;
 
-        if (audio->isoc_out_wrptr >= audio->isoc_out_rdptr) {
+        if(audio->isoc_out_wrptr >= audio->isoc_out_rdptr) {
             audio->buf_free_size = TOTAL_OUT_BUF_SIZE + audio->isoc_out_rdptr - audio->isoc_out_wrptr;
         } else {
             audio->buf_free_size = audio->isoc_out_rdptr - audio->isoc_out_wrptr;
         }
 
         /* free buffer enough to save rx data */
-        if (audio->buf_free_size > usb_rx_length) {
-            if (audio->isoc_out_wrptr >= audio->isoc_out_rdptr) {
+        if(audio->buf_free_size > usb_rx_length) {
+            if(audio->isoc_out_wrptr >= audio->isoc_out_rdptr) {
                 tail_len = audio->isoc_out_buff + TOTAL_OUT_BUF_SIZE - audio->isoc_out_wrptr;
 
-                if(tail_len >= usb_rx_length){
+                if(tail_len >= usb_rx_length) {
                     memcpy(audio->isoc_out_wrptr, audio->usb_rx_buffer, usb_rx_length);
 
                     /* increment the buffer pointer */
                     audio->isoc_out_wrptr += usb_rx_length;
 
                     /* increment the Buffer pointer or roll it back when all buffers are full */
-                    if (audio->isoc_out_wrptr >= (audio->isoc_out_buff + TOTAL_OUT_BUF_SIZE)) {
+                    if(audio->isoc_out_wrptr >= (audio->isoc_out_buff + TOTAL_OUT_BUF_SIZE)) {
                         /* all buffers are full: roll back */
                         audio->isoc_out_wrptr = audio->isoc_out_buff;
                     }
@@ -558,20 +550,20 @@ static void audio_data_out(usb_dev *udev, uint8_t ep_num)
         }
 
         /* prepare out endpoint to receive next audio packet */
-        usbd_ep_recev (udev, AD_OUT_EP, audio->usb_rx_buffer, SPEAKER_OUT_MAX_PACKET);
+        usbd_ep_recev(udev, AD_OUT_EP, audio->usb_rx_buffer, SPEAKER_OUT_MAX_PACKET);
 
-        if (audio->isoc_out_wrptr >= audio->isoc_out_rdptr) {
+        if(audio->isoc_out_wrptr >= audio->isoc_out_rdptr) {
             audio->buf_free_size = TOTAL_OUT_BUF_SIZE + audio->isoc_out_rdptr - audio->isoc_out_wrptr;
         } else {
             audio->buf_free_size = audio->isoc_out_rdptr - audio->isoc_out_wrptr;
         }
 
-        if ((0U == audio->play_flag) && (audio->buf_free_size < TOTAL_OUT_BUF_SIZE / 2)) {
+        if((0U == audio->play_flag) && (audio->buf_free_size < TOTAL_OUT_BUF_SIZE / 2U)) {
             /* enable start of streaming */
             audio->play_flag = 1U;
 
             /* initialize the audio output hardware layer */
-            if (USBD_OK != audio_out_fops.audio_cmd(audio->isoc_out_rdptr, SPEAKER_OUT_MAX_PACKET / 2, AD_CMD_PLAY)) {
+            if(USBD_OK != audio_out_fops.audio_cmd(audio->isoc_out_rdptr, SPEAKER_OUT_MAX_PACKET / 2U, AD_CMD_PLAY)) {
                 return;
             }
 
@@ -591,11 +583,11 @@ static uint8_t audio_ctlx_out(usb_dev *udev)
     usbd_audio_handler *audio = (usbd_audio_handler *)udev->class_data[USBD_AD_INTERFACE];
 
     /* check if an audio_control request has been issued */
-    if (AD_REQ_SET_CUR == udev->class_core->req_cmd) {
+    if(AD_REQ_SET_CUR == udev->class_core->req_cmd) {
         /* in this driver, to simplify code, only SET_CUR request is managed */
 
         /* check for which addressed unit the audio_control request has been issued */
-        if (AD_OUT_STREAMING_CTRL == audio->audioctl_unit) {
+        if(AD_OUT_STREAMING_CTRL == audio->audioctl_unit) {
             /* in this driver, to simplify code, only one unit is manage */
 
             /* reset the audioctl_cmd variable to prevent re-entering this function */
@@ -614,7 +606,7 @@ static uint8_t audio_ctlx_out(usb_dev *udev)
     \param[out] none
     \retval     USB device operation status
 */
-static uint8_t audio_sof (usb_dev *udev)
+static uint8_t audio_sof(usb_dev *udev)
 {
     return USBD_OK;
 }

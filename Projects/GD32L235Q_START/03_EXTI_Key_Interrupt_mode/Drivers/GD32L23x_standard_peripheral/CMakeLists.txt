@@ -2,17 +2,7 @@ project(GD32L23x_standard_peripheral LANGUAGES C CXX ASM)
 
 # Comment-out unused source files.
 add_library(GD32L23x_standard_peripheral OBJECT
-    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_rcu.c
-    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_rtc.c
-    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_slcd.c
-    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_spi.c
-    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_syscfg.c
-    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_timer.c
-    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_trng.c
-    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_usart.c
-    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_vref.c
-    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_wwdgt.c
-    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_adc.c
+	${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_adc.c
     ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_can.c
     ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_cau.c
     ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_cau_aes.c
@@ -33,6 +23,16 @@ add_library(GD32L23x_standard_peripheral OBJECT
     ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_lpuart.c
     ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_misc.c
     ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_pmu.c
+    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_rcu.c
+    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_rtc.c
+    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_slcd.c
+    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_spi.c
+    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_syscfg.c
+    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_timer.c
+    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_trng.c
+    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_usart.c
+    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_vref.c
+    ${DRIVERS_DIR}/GD32L23x_standard_peripheral/Source/gd32l23x_wwdgt.c
     )
 
 target_include_directories(GD32L23x_standard_peripheral PUBLIC

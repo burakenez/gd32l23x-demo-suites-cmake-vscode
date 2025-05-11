@@ -2,11 +2,11 @@
     \file    readme.txt
     \brief   description of the EXTI key interrupt mode example
 
-    \version 2024-03-25, V2.2.0, demo for GD32L23x
+    \version 2025-02-18, V2.4.0, demo for GD32L23x
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -32,7 +32,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 OF SUCH DAMAGE.
 */
 
-  This example is based on the GD32L235E-START-V1.0 board. On the board, the Wakeup key
+  This example is based on the GD32L235E-START-V2.0 board. On the board, the Wakeup key
 connected to PA0 and the LED1 connected to PA15. It provides a description to use the
 key to control the LED by the interrupt. The user can toggle the output state of LED1
 by pressing the Wakeup key.

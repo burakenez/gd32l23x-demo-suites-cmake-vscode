@@ -2,11 +2,11 @@
     \file    dfu_core.c
     \brief   USB DFU device class core functions
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -32,37 +32,38 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 OF SUCH DAMAGE.
 */
 
-#include "dfu_core.h"
 #include "systick.h"
+#include "dfu_core.h"
 #include "dfu_mem.h"
+#include "inter_flash_if.h"
+#include "nor_flash_if.h"
+
 #include <string.h>
 
 #define USBD_VID               0x28E9U
 #define USBD_PID               0x0189U
 
 /* local function prototypes ('static') */
-static uint8_t dfu_init        (usb_dev *udev, uint8_t config_index);
-static uint8_t dfu_deinit      (usb_dev *udev, uint8_t config_index);
-static uint8_t dfu_req_handler (usb_dev *udev, usb_req *req);
-static uint8_t dfu_ctlx_in     (usb_dev *udev);
+static uint8_t dfu_init(usb_dev *udev, uint8_t config_index);
+static uint8_t dfu_deinit(usb_dev *udev, uint8_t config_index);
+static uint8_t dfu_req_handler(usb_dev *udev, usb_req *req);
+static uint8_t dfu_ctlx_in(usb_dev *udev);
+
+static void dfu_mode_leave(usb_dev *udev);
+static uint8_t dfu_getstatus_complete(usb_dev *udev);
 
 /* DFU requests management functions */
-static void dfu_detach         (usb_dev *udev, usb_req *req);
-static void dfu_dnload         (usb_dev *udev, usb_req *req);
-static void dfu_upload         (usb_dev *udev, usb_req *req);
-static void dfu_getstatus      (usb_dev *udev, usb_req *req);
-static void dfu_clrstatus      (usb_dev *udev, usb_req *req);
-static void dfu_getstate       (usb_dev *udev, usb_req *req);
-static void dfu_abort          (usb_dev *udev, usb_req *req);
-static void string_to_unicode  (uint8_t *str, uint16_t *pbuf);
-static void dfu_mode_leave            (usb_dev *udev);
-static uint8_t dfu_getstatus_complete (usb_dev *udev);
+static void dfu_detach(usb_dev *udev, usb_req *req);
+static void dfu_dnload(usb_dev *udev, usb_req *req);
+static void dfu_upload(usb_dev *udev, usb_req *req);
+static void dfu_getstatus(usb_dev *udev, usb_req *req);
+static void dfu_clrstatus(usb_dev *udev, usb_req *req);
+static void dfu_getstate(usb_dev *udev, usb_req *req);
+static void dfu_abort(usb_dev *udev, usb_req *req);
 
-extern dfu_mem_prop dfu_inter_flash_cb;
-extern dfu_mem_prop dfu_nor_flash_cb;
+static void string_to_unicode(uint8_t *str, uint16_t *pbuf);
 
-static void (*dfu_request_process[])(usb_dev *udev, usb_req *req) = 
-{
+static void (*dfu_request_process[])(usb_dev *udev, usb_req *req) = {
     [DFU_DETACH]    = dfu_detach,
     [DFU_DNLOAD]    = dfu_dnload,
     [DFU_UPLOAD]    = dfu_upload,
@@ -74,13 +75,12 @@ static void (*dfu_request_process[])(usb_dev *udev, usb_req *req) =
 
 /* note:it should use the c99 standard when compiling the below codes */
 /* USB standard device descriptor */
-__ALIGNED(2) usb_desc_dev dfu_dev_desc =
-{
-    .header = 
-     {
-         .bLength          = USB_DEV_DESC_LEN, 
-         .bDescriptorType  = USB_DESCTYPE_DEV
-     },
+usb_desc_dev dfu_dev_desc = {
+    .header =
+    {
+        .bLength          = USB_DEV_DESC_LEN,
+        .bDescriptorType  = USB_DESCTYPE_DEV
+    },
     .bcdUSB                = 0x0200U,
     .bDeviceClass          = 0x00U,
     .bDeviceSubClass       = 0x00U,
@@ -96,8 +96,7 @@ __ALIGNED(2) usb_desc_dev dfu_dev_desc =
 };
 
 /* USB device configuration descriptor */
-__ALIGNED(2) usb_dfu_desc_config_set dfu_config_desc = 
-{
+__ALIGNED(2) usb_dfu_desc_config_set dfu_config_desc = {
     .config = 
     {
         .header = 
@@ -160,8 +159,7 @@ __ALIGNED(2) usb_dfu_desc_config_set dfu_config_desc =
 };
 
 /* USB language ID descriptor */
-__ALIGNED(2) static usb_desc_LANGID usbd_language_id_desc = 
-{
+__ALIGNED(2) static usb_desc_LANGID usbd_language_id_desc = {
     .header = 
     {
          .bLength         = sizeof(usb_desc_LANGID), 
@@ -171,69 +169,62 @@ __ALIGNED(2) static usb_desc_LANGID usbd_language_id_desc =
 };
 
 /* USB manufacture string */
-__ALIGNED(2) static usb_desc_str manufacturer_string = 
-{
+__ALIGNED(2) static usb_desc_str manufacturer_string = {
     .header = 
      {
          .bLength         = USB_STRING_LEN(10U), 
-         .bDescriptorType = USB_DESCTYPE_STR,
+         .bDescriptorType = USB_DESCTYPE_STR
      },
     .unicode_string = {'G', 'i', 'g', 'a', 'D', 'e', 'v', 'i', 'c', 'e'}
 };
 
 /* USB product string */
-__ALIGNED(2) static usb_desc_str product_string = 
-{
+__ALIGNED(2) static usb_desc_str product_string = {
     .header = 
      {
          .bLength         = USB_STRING_LEN(12U), 
-         .bDescriptorType = USB_DESCTYPE_STR,
+         .bDescriptorType = USB_DESCTYPE_STR
      },
     .unicode_string = {'G', 'D', '3', '2', '-', 'U', 'S', 'B', '_', 'D', 'F', 'U'}
 };
 
 /* USB serial string */
-__ALIGNED(2) static usb_desc_str serial_string = 
-{
+__ALIGNED(2) static usb_desc_str serial_string = {
     .header = 
      {
          .bLength         = USB_STRING_LEN(2U), 
-         .bDescriptorType = USB_DESCTYPE_STR,
+         .bDescriptorType = USB_DESCTYPE_STR
      }
 };
 
 /* USB configure string */
-__ALIGNED(2) static usb_desc_str config_string = 
-{
+__ALIGNED(2) static usb_desc_str config_string = {
     .header = 
      {
          .bLength         = USB_STRING_LEN(15U), 
-         .bDescriptorType = USB_DESCTYPE_STR,
+         .bDescriptorType = USB_DESCTYPE_STR
      },
     .unicode_string = {'G', 'D', '3', '2', ' ', 'U', 'S', 'B', ' ', 'C', 'O', 'N', 'F', 'I', 'G'}
 };
 
 /* alternate interface 0 string */
-__ALIGNED(2) static usb_desc_str interface_string0 = 
-{
+__ALIGNED(2) static usb_desc_str interface_string0 = {
     .header = 
      {
          .bLength         = USB_STRING_LEN(2U), 
-         .bDescriptorType = USB_DESCTYPE_STR,
+         .bDescriptorType = USB_DESCTYPE_STR
      },
 };
 /* alternate interface 1 string */
-__ALIGNED(2) static usb_desc_str interface_string1 = 
-{
+__ALIGNED(2) static usb_desc_str interface_string1 = {
     .header = 
     {
          .bLength         = USB_STRING_LEN(2U), 
-         .bDescriptorType = USB_DESCTYPE_STR,
+         .bDescriptorType = USB_DESCTYPE_STR
     },
 };
 
-uint8_t* usbd_dfu_strings[] = 
-{
+uint8_t* usbd_dfu_strings[] = {
     [STR_IDX_LANGID]   = (uint8_t *)&usbd_language_id_desc,
     [STR_IDX_MFC]      = (uint8_t *)&manufacturer_string,
     [STR_IDX_PRODUCT]  = (uint8_t *)&product_string,
@@ -263,7 +254,7 @@ usb_class dfu_class = {
     \param[out] none
     \retval     USB device operation status
 */
-static uint8_t dfu_init (usb_dev *udev, uint8_t config_index)
+static uint8_t dfu_init(usb_dev *udev, uint8_t config_index)
 {
     static usbd_dfu_handler dfu_handler;
 
@@ -272,7 +263,7 @@ static uint8_t dfu_init (usb_dev *udev, uint8_t config_index)
 
     systick_config();
 
-    memset((void *)&dfu_handler, 0, sizeof(usbd_dfu_handler));
+    memset((void *)&dfu_handler, 0U, sizeof(usbd_dfu_handler));
 
     dfu_handler.base_addr = APP_LOADED_ADDR;
     dfu_handler.manifest_state = MANIFEST_COMPLETE;
@@ -284,6 +275,7 @@ static uint8_t dfu_init (usb_dev *udev, uint8_t config_index)
     /* create interface string */
     string_to_unicode((uint8_t *)dfu_inter_flash_cb.pstr_desc, (uint16_t *)udev->desc->strings[STR_IDX_ALT_ITF0]);
     string_to_unicode((uint8_t *)dfu_nor_flash_cb.pstr_desc, (uint16_t *)udev->desc->strings[STR_IDX_ALT_ITF1]);
+
     return USBD_OK;
 }
 
@@ -294,17 +286,17 @@ static uint8_t dfu_init (usb_dev *udev, uint8_t config_index)
     \param[out] none
     \retval     USB device operation status
 */
-static uint8_t dfu_deinit (usb_dev *udev, uint8_t config_index)
+static uint8_t dfu_deinit(usb_dev *udev, uint8_t config_index)
 {
     usbd_dfu_handler *dfu = (usbd_dfu_handler *)udev->class_data[USBD_DFU_INTERFACE];
 
     /* restore device default state */
-    memset(udev->class_data[USBD_DFU_INTERFACE], 0, sizeof(usbd_dfu_handler));
+    memset(udev->class_data[USBD_DFU_INTERFACE], 0U, sizeof(usbd_dfu_handler));
 
     dfu->bState = STATE_DFU_IDLE;
     dfu->bStatus = STATUS_OK;
 
-    /* deinitialize the memory media */
+    /* deinit the memory */
     dfu_mem_deinit();
 
     return USBD_OK;
@@ -317,9 +309,9 @@ static uint8_t dfu_deinit (usb_dev *udev, uint8_t config_index)
     \param[out] none
     \retval     USB device operation status
 */
-static uint8_t dfu_req_handler (usb_dev *udev, usb_req *req)
+static uint8_t dfu_req_handler(usb_dev *udev, usb_req *req)
 {
-    if (req->bRequest < DFU_REQ_MAX) {
+    if(req->bRequest < DFU_REQ_MAX) {
         dfu_request_process[req->bRequest](udev, req);
     } else {
         return USBD_FAIL;
@@ -334,7 +326,7 @@ static uint8_t dfu_req_handler (usb_dev *udev, usb_req *req)
     \param[out] none
     \retval     USB device operation status
 */
-static uint8_t dfu_ctlx_in (usb_dev *udev)
+static uint8_t dfu_ctlx_in(usb_dev *udev)
 {
     dfu_getstatus_complete(udev);
 
@@ -342,29 +334,54 @@ static uint8_t dfu_ctlx_in (usb_dev *udev)
 }
 
 /*!
-    \brief      handle data in stage in control endpoint 0
+    \brief      leave DFU mode and reset device to jump to user loaded code
+    \param[in]  udev: pointer to USB device instance
+    \param[out] none
+    \retval     none
+*/
+static void dfu_mode_leave(usb_dev *udev)
+{
+    usbd_dfu_handler *dfu = (usbd_dfu_handler *)udev->class_data[USBD_DFU_INTERFACE];
+
+    dfu->manifest_state = MANIFEST_COMPLETE;
+
+    if(dfu_config_desc.dfu_func.bmAttributes & 0x04U) {
+        dfu->bState = STATE_DFU_MANIFEST_SYNC;
+    } else {
+        dfu->bState = STATE_DFU_MANIFEST_WAIT_RESET;
+
+        /* deinitialize the memory media */
+        dfu_mem_deinit();
+
+        /* generate system reset to allow jumping to the user code */
+        NVIC_SystemReset();
+    }
+}
+
+/*!
+    \brief      handle data IN stage in control endpoint 0
     \param[in]  udev: pointer to USB device instance
     \param[out] none
     \retval     USB device operation status
   */
-static uint8_t dfu_getstatus_complete (usb_dev *udev)
+static uint8_t dfu_getstatus_complete(usb_dev *udev)
 {
     uint32_t addr;
 
     usbd_dfu_handler *dfu = (usbd_dfu_handler *)udev->class_data[USBD_DFU_INTERFACE];
 
-    if (STATE_DFU_DNBUSY == dfu->bState) {
+    if(STATE_DFU_DNBUSY == dfu->bState) {
         /* decode the special command */
-        if (0U == dfu->block_num) {
-            if (1U == dfu->data_len){
-                if (GET_COMMANDS == dfu->buf[0]) {
+        if(0U == dfu->block_num) {
+            if(1U == dfu->data_len) {
+                if(GET_COMMANDS == dfu->buf[0]) {
                     /* no operation */
                 }
-            } else if (5U == dfu->data_len) {
-                if (SET_ADDRESS_POINTER == dfu->buf[0]) {
+            } else if(5U == dfu->data_len) {
+                if(SET_ADDRESS_POINTER == dfu->buf[0]) {
                     /* set flash operation address */
                     dfu->base_addr = (uint32_t)((dfu->buf[4]<<24)|(dfu->buf[3]<<16)|(dfu->buf[2]<<8)|(dfu->buf[1]));
-                } else if (ERASE == dfu->buf[0]) {
+                } else if(ERASE == dfu->buf[0]) {
                     dfu->base_addr = (uint32_t)((dfu->buf[4]<<24)|(dfu->buf[3]<<16)|(dfu->buf[2]<<8)|(dfu->buf[1]));
 
                     dfu_mem_erase(dfu->base_addr);
@@ -374,15 +391,15 @@ static uint8_t dfu_getstatus_complete (usb_dev *udev)
             } else {
                 /* no operation */
             }
-        } else if (dfu->block_num > 1U) {  /* regular download command */
+        } else if(dfu->block_num > 1U) {  /* regular download command */
             /* decode the required address */
             addr = (dfu->block_num - 2U) * TRANSFER_SIZE + dfu->base_addr;
 
-            dfu_mem_write (dfu->buf, addr, dfu->data_len);
+            dfu_mem_write(dfu->buf, addr, dfu->data_len);
 
             dfu->block_num = 0U;
         } else {
-             /* no operation */
+            /* no operation */
         }
 
         dfu->data_len = 0U;
@@ -391,7 +408,7 @@ static uint8_t dfu_getstatus_complete (usb_dev *udev)
         dfu->bState = STATE_DFU_DNLOAD_SYNC;
 
         return USBD_OK;
-    } else if (STATE_DFU_MANIFEST == dfu->bState) {  /* manifestation in progress */
+    } else if(STATE_DFU_MANIFEST == dfu->bState) {  /* manifestation in progress */
         /* start leaving DFU mode */
         dfu_mode_leave(udev);
     } else {
@@ -412,7 +429,7 @@ static void dfu_detach(usb_dev *udev, usb_req *req)
 {
     usbd_dfu_handler *dfu = (usbd_dfu_handler *)udev->class_data[USBD_DFU_INTERFACE];
 
-    switch (dfu->bState) {
+    switch(dfu->bState) {
     case STATE_DFU_IDLE:
     case STATE_DFU_DNLOAD_SYNC:
     case STATE_DFU_DNLOAD_IDLE:
@@ -425,13 +442,13 @@ static void dfu_detach(usb_dev *udev, usb_req *req)
         dfu->block_num = 0U;
         dfu->data_len = 0U;
         break;
- 
+
     default:
         break;
     }
 
     /* check the detach capability in the DFU functional descriptor */
-    if (dfu_config_desc.dfu_func.wDetachTimeOut & DFU_DETACH_MASK) {
+    if(dfu_config_desc.dfu_func.wDetachTimeOut & DFU_DETACH_MASK) {
         usbd_disconnect(udev);
 
         usbd_connect(udev);
@@ -454,10 +471,10 @@ static void dfu_dnload(usb_dev *udev, usb_req *req)
 
     usbd_dfu_handler *dfu = (usbd_dfu_handler *)udev->class_data[USBD_DFU_INTERFACE];
 
-    switch (dfu->bState) {
+    switch(dfu->bState) {
     case STATE_DFU_IDLE:
     case STATE_DFU_DNLOAD_IDLE:
-        if (req->wLength > 0U) {
+        if(req->wLength > 0U) {
             /* update the global length and block number */
             dfu->block_num = req->wValue;
             dfu->data_len = req->wLength;
@@ -485,22 +502,20 @@ static void dfu_dnload(usb_dev *udev, usb_req *req)
     \param[out] none
     \retval     none
 */
-static void dfu_upload (usb_dev *udev, usb_req *req)
+static void dfu_upload(usb_dev *udev, usb_req *req)
 {
     uint8_t *phy_addr = NULL;
     uint32_t addr = 0U;
-
     usbd_dfu_handler *dfu = (usbd_dfu_handler *)udev->class_data[USBD_DFU_INTERFACE];
-
-    if(req->wLength <= 0U) {
-        dfu->bState = STATE_DFU_IDLE;
-
-        return;
-    }
 
     usb_transc *transc = &udev->transc_in[0];
 
-    switch (dfu->bState) {
+    if(req->wLength <= 0U) {
+        dfu->bState = STATE_DFU_IDLE;
+        return;
+    }
+
+    switch(dfu->bState) {
     case STATE_DFU_IDLE:
     case STATE_DFU_UPLOAD_IDLE:
         /* update the global length and block number */
@@ -508,7 +523,7 @@ static void dfu_upload (usb_dev *udev, usb_req *req)
         dfu->data_len = req->wLength;
 
         /* DFU get command */
-        if (0U == dfu->block_num) {
+        if(0U == dfu->block_num) {
             /* update the state machine */
             dfu->bState = (dfu->data_len > 3U) ? STATE_DFU_IDLE : STATE_DFU_UPLOAD_IDLE;
 
@@ -520,14 +535,14 @@ static void dfu_upload (usb_dev *udev, usb_req *req)
             /* send the status data over EP0 */
             transc->xfer_buf = &(dfu->buf[0]);
             transc->xfer_len = 3U;
-        } else if (dfu->block_num > 1U) {
+        } else if(dfu->block_num > 1U) {
             dfu->bState = STATE_DFU_UPLOAD_IDLE;
 
             /* change is accelerated */
             addr = (dfu->block_num - 2U) * TRANSFER_SIZE + dfu->base_addr;
 
             /* return the physical address where data are stored */
-            phy_addr = dfu_mem_read (dfu->buf, addr, dfu->data_len);
+            phy_addr = dfu_mem_read(dfu->buf, addr, dfu->data_len);
 
             /* send the status data over EP0 */
             transc->xfer_buf = phy_addr;
@@ -551,22 +566,22 @@ static void dfu_upload (usb_dev *udev, usb_req *req)
     \param[out] none
     \retval     none
 */
-static void dfu_getstatus (usb_dev *udev, usb_req *req)
+static void dfu_getstatus(usb_dev *udev, usb_req *req)
 {
     usb_transc *transc = &udev->transc_in[0];
 
     usbd_dfu_handler *dfu = (usbd_dfu_handler *)udev->class_data[USBD_DFU_INTERFACE];
 
-    switch (dfu->bState) {
+    switch(dfu->bState) {
     case STATE_DFU_DNLOAD_SYNC:
-        if (0U != dfu->data_len) {
+        if(0U != dfu->data_len) {
             dfu->bState = STATE_DFU_DNBUSY;
 
-            if (0U == dfu->block_num) {
-                if (ERASE == dfu->buf[0]) {
-                    SET_POLLING_TIMEOUT(FLASH_ERASE_TIMEOUT);
+            if(0U == dfu->block_num) {
+                if(ERASE == dfu->buf[0]) {
+                    dfu_mem_getstatus(dfu->base_addr, CMD_ERASE, (uint8_t *)&dfu->bwPollTimeout0);
                 } else {
-                    SET_POLLING_TIMEOUT(FLASH_WRITE_TIMEOUT);
+                    dfu_mem_getstatus(dfu->base_addr, CMD_WRITE, (uint8_t *)&dfu->bwPollTimeout0);
                 }
             }
         } else {
@@ -575,11 +590,11 @@ static void dfu_getstatus (usb_dev *udev, usb_req *req)
         break;
 
     case STATE_DFU_MANIFEST_SYNC:
-        if (MANIFEST_IN_PROGRESS == dfu->manifest_state) {
+        if(MANIFEST_IN_PROGRESS == dfu->manifest_state) {
             dfu->bState = STATE_DFU_MANIFEST;
             dfu->bwPollTimeout0 = 1U;
-        } else if ((MANIFEST_COMPLETE == dfu->manifest_state) && \
-            (dfu_config_desc.dfu_func.bmAttributes & 0x04U)){
+        } else if((MANIFEST_COMPLETE == dfu->manifest_state) && \
+                  (dfu_config_desc.dfu_func.bmAttributes & 0x04U)) {
             dfu->bState = STATE_DFU_IDLE;
             dfu->bwPollTimeout0 = 0U;
         } else {
@@ -603,11 +618,11 @@ static void dfu_getstatus (usb_dev *udev, usb_req *req)
     \param[out] none
     \retval     none
 */
-static void dfu_clrstatus (usb_dev *udev, usb_req *req)
+static void dfu_clrstatus(usb_dev *udev, usb_req *req)
 {
     usbd_dfu_handler *dfu = (usbd_dfu_handler *)udev->class_data[USBD_DFU_INTERFACE];
 
-    if (STATE_DFU_ERROR == dfu->bState) {
+    if(STATE_DFU_ERROR == dfu->bState) {
         dfu->bStatus = STATUS_OK;
         dfu->bState = STATE_DFU_IDLE;
     } else {
@@ -626,7 +641,7 @@ static void dfu_clrstatus (usb_dev *udev, usb_req *req)
     \param[out] none
     \retval     none
 */
-static void dfu_getstate (usb_dev *udev, usb_req *req)
+static void dfu_getstate(usb_dev *udev, usb_req *req)
 {
     usb_transc *transc = &udev->transc_in[0];
 
@@ -644,11 +659,11 @@ static void dfu_getstate (usb_dev *udev, usb_req *req)
     \param[out] none
     \retval     none
 */
-static void dfu_abort (usb_dev *udev, usb_req *req)
+static void dfu_abort(usb_dev *udev, usb_req *req)
 {
     usbd_dfu_handler *dfu = (usbd_dfu_handler *)udev->class_data[USBD_DFU_INTERFACE];
 
-    switch (dfu->bState){
+    switch(dfu->bState) {
     case STATE_DFU_IDLE:
     case STATE_DFU_DNLOAD_SYNC:
     case STATE_DFU_DNLOAD_IDLE:
@@ -674,40 +689,16 @@ static void dfu_abort (usb_dev *udev, usb_req *req)
     \param[out] none
     \retval     none
 */
-static void string_to_unicode (uint8_t *str, uint16_t *pbuf)
+static void string_to_unicode(uint8_t *str, uint16_t *pbuf)
 {
-    uint8_t index = 0;
+    uint8_t index = 0U;
 
-    if (str != NULL) {
-        pbuf[index++] = ((strlen((const char *)str) * 2U + 2U) & 0x00FFU) | ((USB_DESCTYPE_STR << 8U) & 0xFF00);
+    if(str != NULL) {
+        pbuf[index++] = ((strlen((const char *)str) * 2U + 2U) & 0x00FFU) | ((USB_DESCTYPE_STR << 8) & 0xFF00U);
 
-        while (*str != '\0') {
+        while(*str != '\0') {
             pbuf[index++] = *str++;
         }
     }
 }
 
-/*!
-    \brief      leave DFU mode and reset device to jump to user loaded code
-    \param[in]  udev: pointer to USB device instance
-    \param[out] none
-    \retval     none
-*/
-static void dfu_mode_leave (usb_dev *udev)
-{
-    usbd_dfu_handler *dfu = (usbd_dfu_handler *)udev->class_data[USBD_DFU_INTERFACE];
-
-    dfu->manifest_state = MANIFEST_COMPLETE;
-
-    if (dfu_config_desc.dfu_func.bmAttributes & 0x04U) {
-        dfu->bState = STATE_DFU_MANIFEST_SYNC;
-    } else {
-        dfu->bState = STATE_DFU_MANIFEST_WAIT_RESET;
-
-        /* deinitialize the memory media */
-        dfu_mem_deinit();
-
-        /* generate system reset to allow jumping to the user code */
-        NVIC_SystemReset();
-    }
-}

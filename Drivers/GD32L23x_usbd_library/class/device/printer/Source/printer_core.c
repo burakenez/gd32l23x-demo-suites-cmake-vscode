@@ -2,11 +2,11 @@
     \file    printer_core.c
     \brief   USB printer device class core functions
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -42,8 +42,7 @@ OF SUCH DAMAGE.
 __ALIGNED(2) uint8_t g_port_status = 0x18U;
 __ALIGNED(2) uint8_t g_printer_data_buf[PRINTER_OUT_PACKET];
 
-__ALIGNED(2) uint8_t Printer_DEVICE_ID[DEVICE_ID_LEN] =
-{
+__ALIGNED(2) uint8_t Printer_DEVICE_ID[DEVICE_ID_LEN] = {
     0x00, 0x67,
     'M', 'A', 'N', 'U', 'F', 'A', 'C', 'T', 'U', 'R', 'E', 'R', ':',
     'G', 'I', 'G', 'A', ' ', 'D', 'E', 'V', 'I', 'C', 'E', '-', ';',
@@ -58,8 +57,7 @@ __ALIGNED(2) uint8_t Printer_DEVICE_ID[DEVICE_ID_LEN] =
 };
 
 /* USB standard device descriptor */
-__ALIGNED(2) usb_desc_dev printer_dev_desc =
-{
+__ALIGNED(2) usb_desc_dev printer_dev_desc = {
     .header = 
      {
          .bLength          = USB_DEV_DESC_LEN, 
@@ -80,8 +78,7 @@ __ALIGNED(2) usb_desc_dev printer_dev_desc =
 };
 
 /* USB device configuration descriptor */
-__ALIGNED(2) usb_printer_desc_config_set printer_config_desc = 
-{
+__ALIGNED(2) usb_printer_desc_config_set printer_config_desc = {
     .config = 
     {
         .header = 
@@ -141,8 +138,7 @@ __ALIGNED(2) usb_printer_desc_config_set printer_config_desc =
 };
 
 /* USB language ID Descriptor */
-__ALIGNED(2) static usb_desc_LANGID usbd_language_id_desc = 
-{
+__ALIGNED(2) static usb_desc_LANGID usbd_language_id_desc = {
     .header = 
      {
          .bLength         = sizeof(usb_desc_LANGID), 
@@ -152,40 +148,36 @@ __ALIGNED(2) static usb_desc_LANGID usbd_language_id_desc =
 };
 
 /* USB manufacture string */
-__ALIGNED(2) static usb_desc_str manufacturer_string = 
-{
+__ALIGNED(2) static usb_desc_str manufacturer_string = {
     .header = 
      {
          .bLength         = USB_STRING_LEN(10U), 
-         .bDescriptorType = USB_DESCTYPE_STR,
+         .bDescriptorType = USB_DESCTYPE_STR
      },
     .unicode_string = {'G', 'i', 'g', 'a', 'D', 'e', 'v', 'i', 'c', 'e'}
 };
 
 /* USB product string */
-__ALIGNED(2) static usb_desc_str product_string = 
-{
+__ALIGNED(2) static usb_desc_str product_string = {
     .header = 
      {
          .bLength         = USB_STRING_LEN(16U), 
-         .bDescriptorType = USB_DESCTYPE_STR,
+         .bDescriptorType = USB_DESCTYPE_STR
      },
     .unicode_string = {'G', 'D', '3', '2', '-', 'U', 'S', 'B', '_', 'P', 'r', 'i', 'n', 't', 'e', 'r'}
 };
 
 /* USB serial string */
-__ALIGNED(2) static usb_desc_str serial_string = 
-{
+__ALIGNED(2) static usb_desc_str serial_string = {
     .header = 
      {
          .bLength         = USB_STRING_LEN(12U), 
-         .bDescriptorType = USB_DESCTYPE_STR,
+         .bDescriptorType = USB_DESCTYPE_STR
      }
 };
 
 /* USB string descriptor set */
-static uint8_t* usbd_msc_strings[] = 
-{
+static uint8_t* usbd_msc_strings[] = {
     [STR_IDX_LANGID]  = (uint8_t *)&usbd_language_id_desc,
     [STR_IDX_MFC]     = (uint8_t *)&manufacturer_string,
     [STR_IDX_PRODUCT] = (uint8_t *)&product_string,
@@ -199,14 +191,13 @@ usb_desc printer_desc = {
 };
 
 /* local function prototypes ('static') */
-static uint8_t printer_init         (usb_dev *udev, uint8_t config_index);
-static uint8_t printer_deinit       (usb_dev *udev, uint8_t config_index);
-static uint8_t printer_req_handler  (usb_dev *udev, usb_req *req);
-static void printer_data_in         (usb_dev *udev, uint8_t ep_num);
-static void printer_data_out        (usb_dev *udev, uint8_t ep_num);
+static uint8_t printer_init(usb_dev *udev, uint8_t config_index);
+static uint8_t printer_deinit(usb_dev *udev, uint8_t config_index);
+static uint8_t printer_req_handler(usb_dev *udev, usb_req *req);
+static void printer_data_in(usb_dev *udev, uint8_t ep_num);
+static void printer_data_out(usb_dev *udev, uint8_t ep_num);
 
-usb_class printer_class = 
-{
+usb_class printer_class = {
     .init          = printer_init,
     .deinit        = printer_deinit,
     .req_process   = printer_req_handler,
@@ -221,7 +212,7 @@ usb_class printer_class =
     \param[out] none
     \retval     USB device operation status
 */
-static uint8_t printer_init (usb_dev *udev, uint8_t config_index)
+static uint8_t printer_init(usb_dev *udev, uint8_t config_index)
 {
     /* initialize the data TX/RX endpoint */
     usbd_ep_init(udev, EP_BUF_SNG, BULK_TX_ADDR, &(printer_config_desc.printer_epin));
@@ -243,7 +234,7 @@ static uint8_t printer_init (usb_dev *udev, uint8_t config_index)
     \param[out] none
     \retval     USB device operation status
 */
-static uint8_t printer_deinit (usb_dev *udev, uint8_t config_index)
+static uint8_t printer_deinit(usb_dev *udev, uint8_t config_index)
 {
     /* deinitialize the data TX/RX endpoint */
     usbd_ep_deinit(udev, PRINTER_IN_EP);
@@ -259,11 +250,11 @@ static uint8_t printer_deinit (usb_dev *udev, uint8_t config_index)
     \param[out] none
     \retval     USB device operation status
 */
-static uint8_t printer_req_handler (usb_dev *udev, usb_req *req)
+static uint8_t printer_req_handler(usb_dev *udev, usb_req *req)
 {
     uint8_t status = REQ_NOTSUPP;
 
-    switch (req->bRequest) {
+    switch(req->bRequest) {
     case GET_DEVICE_ID:
         usb_transc_config(&udev->transc_in[0], Printer_DEVICE_ID, DEVICE_ID_LEN, 0U);
 
@@ -296,7 +287,7 @@ static uint8_t printer_req_handler (usb_dev *udev, usb_req *req)
     \param[out] none
     \retval     none
 */
-static void printer_data_in (usb_dev *udev, uint8_t ep_num)
+static void printer_data_in(usb_dev *udev, uint8_t ep_num)
 {
 }
 
@@ -307,6 +298,6 @@ static void printer_data_in (usb_dev *udev, uint8_t ep_num)
     \param[out] none
     \retval     none
 */
-static void printer_data_out (usb_dev *udev, uint8_t ep_num)
+static void printer_data_out(usb_dev *udev, uint8_t ep_num)
 {
 }

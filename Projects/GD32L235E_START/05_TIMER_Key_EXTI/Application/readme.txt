@@ -2,11 +2,11 @@
     \file    readme.txt
     \brief   description of TIMER and Key EXTI LED mode example
 
-    \version 2024-03-25, V2.2.0, demo for GD32L23x
+    \version 2025-02-18, V2.4.0, demo for GD32L23x
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -32,7 +32,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 OF SUCH DAMAGE.
 */
 
-  This example is based on the GD32L235E-START-V1.0 board. it provides a description
+  This example is based on the GD32L235E-START-V2.0 board. it provides a description
 of how to use TIMER and EXTI to control LED. It uses Mini USB interface to supply power. 
 Wakeup button key, LED and GD-Link are also included.
   
@@ -40,6 +40,6 @@ Wakeup button key, LED and GD-Link are also included.
 the output state of LED1 by pressing the Wakeup key. Connect PA6(TIMER2_CH0) and PB1 
 with DuPont line on JP8. The LED1 will be toggled every 500ms.
 
-  On the GD32L235E-START-V1.0 board, LED1 is connected to PA8. Wakeup key is connected to PA0.
+  On the GD32L235E-START-V2.0 board, LED1 is connected to PA8. Wakeup key is connected to PA0.
   
   JP3 must be fitted to Dx.

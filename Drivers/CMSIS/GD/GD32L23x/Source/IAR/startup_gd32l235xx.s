@@ -2,12 +2,12 @@
 ;    \file    startup_gd32l235xx.s
 ;    \brief   start up file
 ;
-;    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+;    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 ;*/
 
 ;/*
 ; * Copyright (c) 2009-2018 Arm Limited. All rights reserved.
-; * Copyright (c) 2024, GigaDevice Semiconductor Inc.
+; * Copyright (c) 2025, GigaDevice Semiconductor Inc.
 ; *
 ; * SPDX-License-Identifier: Apache-2.0
 ; *

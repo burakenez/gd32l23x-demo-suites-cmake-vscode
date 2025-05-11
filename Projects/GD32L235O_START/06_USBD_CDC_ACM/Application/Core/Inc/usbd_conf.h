@@ -2,11 +2,11 @@
     \file    usbd_conf.h
     \brief   usb device driver basic configuration
 
-    \version 2024-03-25, V2.2.0, demo for GD32L23x
+    \version 2025-02-18, V2.4.0, demo for GD32L23x
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -36,7 +36,7 @@ OF SUCH DAMAGE.
 #define __USBD_CONF_H
 
 #include "gd32l23x.h"
-// #include "gd32l235o_start.h"
+#include "gd32l235o_start.h"
 
 #define USBD_CFG_MAX_NUM                   1U
 #define USBD_ITF_MAX_NUM                   1U

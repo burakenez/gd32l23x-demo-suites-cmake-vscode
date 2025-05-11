@@ -2,11 +2,11 @@
     \file    readme.txt
     \brief   description of USART HyperTerminal interrupt
 
-    \version 2024-03-25, V2.2.0, demo for GD32L23x
+    \version 2025-02-18, V2.4.0, demo for GD32L23x
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification, 
 are permitted provided that the following conditions are met:
@@ -32,7 +32,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 OF SUCH DAMAGE.
 */
 
-  This demo is based on the GD32L235E-START-V1.0 board, it shows how to use USART transmit 
+  This demo is based on the GD32L235E-START-V2.0 board, it shows how to use USART transmit 
 and receive interrupts to communicate with the hyperterminal.
 
   Firstly, USART1 sends the data to the hyperterminal and still waits for receiving 

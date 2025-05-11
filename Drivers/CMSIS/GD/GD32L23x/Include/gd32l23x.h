@@ -2,12 +2,12 @@
     \file    gd32l23x.h
     \brief   general definitions for GD32L23x
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
  * Copyright (c) 2009-2018 Arm Limited. All rights reserved.
- * Copyright (c) 2024, GigaDevice Semiconductor Inc.
+ * Copyright (c) 2025, GigaDevice Semiconductor Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -75,9 +75,9 @@ extern "C" {
 #define LXTAL_VALUE  ((uint32_t)32768)
 #endif /* low speed crystal oscillator value */
 
-/* GD32L23x firmware library version number V1.0 */
-#define __GD32L23X_STDPERIPH_VERSION_MAIN   (0x01) /*!< [31:24] main version     */
-#define __GD32L23X_STDPERIPH_VERSION_SUB1   (0x00) /*!< [23:16] sub1 version     */
+/* GD32L23x firmware library version number V2.2.0 */
+#define __GD32L23X_STDPERIPH_VERSION_MAIN   (0x02) /*!< [31:24] main version     */
+#define __GD32L23X_STDPERIPH_VERSION_SUB1   (0x02) /*!< [23:16] sub1 version     */
 #define __GD32L23X_STDPERIPH_VERSION_SUB2   (0x00) /*!< [15:8]  sub2 version     */
 #define __GD32L23X_STDPERIPH_VERSION_RC     (0x00) /*!< [7:0]  release candidate */
 #define __GD32L23X_STDPERIPH_VERSION        ((__GD32L23X_STDPERIPH_VERSION_MAIN << 24)\

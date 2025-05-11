@@ -3,15 +3,12 @@ project(Application LANGUAGES C CXX ASM)
 add_executable(Application)
 
 set(TARGET_SRC
-    # Core
+	# Core
     Core/Src/gd32l23x_it.c
     Core/Src/gd32l23x_usbd_hw.c
     Core/Src/main.c
     Core/Src/system_gd32l23x.c
-
-    # Core
-    Core/Src/system_gd32l23x.c
-
+	
     # Startup
     Startup/startup_gd32l235.s
 
@@ -22,13 +19,14 @@ set(TARGET_SRC
 target_sources(Application PRIVATE ${TARGET_SRC})
 
 set(TARGET_INC_DIR
-    ${CMAKE_SOURCE_DIR}/Application/Core/Inc
+	${CMAKE_SOURCE_DIR}/Application/Core/Inc
     )
 
 target_include_directories(Application PRIVATE ${TARGET_INC_DIR})
 
 target_link_options(Application PRIVATE
-	-T${CMAKE_SOURCE_DIR}/gd32l235_flash.ld
+	-T${CMAKE_SOURCE_DIR}/gd32l23x_flash.ld -Xlinker
+    -L${CMAKE_SOURCE_DIR}
 	)
 
 target_link_options(Application PRIVATE
@@ -36,9 +34,9 @@ target_link_options(Application PRIVATE
 	)
 
 target_link_libraries(Application PRIVATE CMSIS)
+target_link_libraries(Application PRIVATE GD32L235O_START)
 target_link_libraries(Application PRIVATE GD32L23x_standard_peripheral)
 target_link_libraries(Application PRIVATE GD32L23x_usbd_library)
-target_link_libraries(Application PRIVATE GD32L235O_START)
 
 add_custom_command(TARGET Application
     POST_BUILD

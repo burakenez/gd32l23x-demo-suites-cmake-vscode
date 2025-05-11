@@ -2,11 +2,11 @@
     \file    usbd_transc.h
     \brief   USBD transaction
 
-    \version 2024-03-25, V2.0.2, firmware for GD32L23x, add support for GD32L235
+    \version 2025-02-10, V2.2.0, firmware for GD32L23x, add support for GD32L235
 */
 
 /*
-    Copyright (c) 2024, GigaDevice Semiconductor Inc.
+    Copyright (c) 2025, GigaDevice Semiconductor Inc.
 
     Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -32,10 +32,12 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 OF SUCH DAMAGE.
 */
 
-#ifndef __USB_TRANSC_H
-#define __USB_TRANSC_H
+#ifndef USBD_TRANSC_H
+#define USBD_TRANSC_H
 
 #include "usbd_core.h"
+
+/* static inline function definitions */
 
 /*!
     \brief      USB transaction configure
@@ -65,19 +67,6 @@ __STATIC_INLINE void usb_stall_transc (usb_dev *udev)
 }
 
 /*!
-    \brief      USB control transaction status IN stage
-    \param[in]  udev: pointer to USB device instance
-    \param[out] none
-    \retval     none
-*/
-static inline void usb_ctl_status_in (usb_dev *udev)
-{
-    udev->control.ctl_state = USBD_CTL_STATUS_IN;
-
-    udev->drv_handler->ep_write(udev->transc_in[0].xfer_buf, 0U, 0U);
-}
-
-/*!
     \brief      USB control transaction data IN stage
     \param[in]  udev: pointer to USB device instance
     \param[out] none
@@ -88,6 +77,19 @@ static inline void usb_ctl_data_in (usb_dev *udev)
     udev->control.ctl_state = USBD_CTL_DATA_IN;
 
     usbd_ep_send(udev, 0U, udev->transc_in[0].xfer_buf, udev->transc_in[0].xfer_len);
+}
+
+/*!
+    \brief      USB control transaction status IN stage
+    \param[in]  udev: pointer to USB device instance
+    \param[out] none
+    \retval     none
+*/
+static inline void usb_ctl_status_in (usb_dev *udev)
+{
+    udev->control.ctl_state = USBD_CTL_STATUS_IN;
+
+    udev->drv_handler->ep_write(udev->transc_in[0].xfer_buf, 0U, 0U);
 }
 
 /*!
@@ -135,4 +137,4 @@ void _usb_out0_transc(usb_dev *udev, uint8_t ep_num);
 /* process USB IN transaction */
 void _usb_in0_transc(usb_dev *udev, uint8_t ep_num);
 
-#endif /* __USB_TRANSC_H */
+#endif /* USBD_TRANSC_H */
